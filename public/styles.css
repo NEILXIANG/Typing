@@ -49,3 +49,16 @@ main{min-height:calc(100dvh - 152px)}
 @media(max-width:650px){.text-button{font-size:15px}.choice{min-height:88px;font-size:40px}.button{font-size:16px}.nav-item{font-size:11px;min-height:0}}
 @media(orientation:landscape) and (max-height:840px){body.focus main{min-height:0;padding:16px 0 20px}body.focus .study-card{padding:18px 32px}}
 .choice.selected{border-color:var(--blue);background:var(--blue-soft)}
+
+/* ---- Typography pass ---- */
+h1{letter-spacing:0}
+.pinyin{color:#6b7f9e}
+footer{font-size:12px;color:#7f8ba0}
+.brand small{font-size:9px}
+.eyebrow{color:#6f7d92}
+.char-card .stage{font-size:12px;color:#6f7d92}
+.feedback.hint{color:#8a6a2a}
+.today-theme{font-size:16px;color:var(--muted);margin:12px 0 0}
+.today-theme+.today-summary{margin-top:4px}
+@font-face{font-family:"Island Kai";src:url(assets/fonts/island-kai.woff2) format("woff2");font-display:swap;unicode-range:U+4E00-9FFF,U+FF1F}
+.big-char,.char-card .hanzi{font-family:"Island Kai","Kaiti SC",KaiTi,STKaiti,serif}
