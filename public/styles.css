@@ -8,3 +8,43 @@ body.focus .topbar nav,body.focus footer,body.focus #music{display:none}body.foc
 [hidden]{display:none!important}
 .study-footer:has(>.text-button:only-child){justify-content:center}
 .feedback .mark{display:inline-flex;width:46px;height:46px;border-radius:50%;align-items:center;justify-content:center;font-size:28px;font-weight:700;margin-right:12px;vertical-align:middle}.mark.ok{background:#8bbb97;color:#fff}.mark.no{background:#f3dfae;color:#8a6a2a}.feedback.success,.feedback.hint{font-size:24px;font-weight:650;display:flex;align-items:center;justify-content:center}
+
+/* ---- Tablet pass: larger text, 48px touch targets, press feedback, landscape fit ---- */
+:root{--muted:#66738a}
+html{overscroll-behavior-y:contain}
+button,.choice,.writer-box,.nav-item{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.small{font-size:14px}
+.button{font-size:16px;min-height:52px;padding:14px 26px;border-radius:14px}
+.text-button{font-size:16px;min-height:48px;padding:8px 12px}
+.nav-item{font-size:15px;min-height:48px}
+.chip{font-size:15px;min-height:48px;padding:10px 18px}
+.word-tag{min-height:48px;display:inline-flex;align-items:center}
+.pill{font-size:13px;min-height:36px}
+.practice-top .pill{font-size:14px}
+.study-sub{font-size:17px}
+.feedback{font-size:16px;color:#66738a}
+.hint-box{font-size:17px}
+.task-card p,.theme-card p,.shop-item p,.scene-card small{font-size:14px}
+.scene-card small{color:#6f7f90}
+.tiny-label{font-size:12px}
+.form-row label{font-size:16px}.form-row label small{font-size:13px}
+.form-row select,.form-row input{min-height:48px;font-size:16px}
+.parent-note,.info-banner{font-size:14px}
+.report-list li{font-size:15px}
+.leaderboard{font-size:15px}.leaderboard th{font-size:13px}
+.char-card small{font-size:12px}.char-card .stage{font-size:11px}
+.mini-stats span{font-size:12px}.mini-stats b{font-size:24px}
+.context-bubble{font-size:16px}
+.matching button{font-size:30px;min-height:80px}
+.choice{min-height:104px;font-size:44px;transition:background .15s,transform .1s}
+.choice.word-choice{font-size:26px;min-height:84px}
+.choice:active:not(:disabled),.task-card:active,.chip:active,.word-tag:active,.char-card:active,.matching button:active,.theme-card:active{transform:scale(.97)}
+.task-card{transition:transform .1s}
+@media(hover:none){.task-card:hover{transform:none}}
+.completion .pill{display:flex;width:max-content}
+dialog{overflow:auto}
+main{min-height:calc(100dvh - 152px)}
+@media(min-width:700px) and (orientation:portrait){.today{margin-top:7vh}.today-art{max-width:460px}.today-summary{font-size:26px}.study-card{min-height:520px}}
+@media(orientation:landscape) and (max-height:840px){main{padding-top:22px}.today{margin-top:1vh}.today-art{max-width:min(420px,36vh)}.today .greet{font-size:20px;margin-bottom:0}.today-summary{font-size:22px;margin:10px 0 16px}.study-card{min-height:0;padding:22px 32px}.choices{margin:16px auto}.choice{min-height:84px}.writer-box{width:min(100%,400px,46vh)}.big-char{font-size:92px}.learn-layout{margin:10px 0}.practice-top{margin-bottom:12px}.completion{padding:28px 30px}}
+@media(max-width:650px){.text-button{font-size:15px}.choice{min-height:88px;font-size:40px}.button{font-size:16px}.nav-item{font-size:11px;min-height:0}}
+@media(orientation:landscape) and (max-height:840px){body.focus main{min-height:0;padding:16px 0 20px}body.focus .study-card{padding:18px 32px}}
