@@ -276,3 +276,6 @@ main{min-height:calc(100dvh - 120px)}
 .garden .decoration.visitor{font-size:40px}
 .visitor-line{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;color:#2f7d4c;font-weight:650;margin:4px 0 10px}
 .visitor-line .emoji{width:32px;height:32px}
+
+/* Opt out of the browser's forced dark mode (Huawei/Chrome "darken websites"); the island is designed for a light page. */
+:root{color-scheme:only light}

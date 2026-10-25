@@ -61,6 +61,7 @@ npx wrangler deploy
 ## 素材和许可
 
 - 汉字笔顺：`hanzi-writer-data` 2.0.1，源自 Make Me a Hanzi／Arphic 字形数据，按 [Arphic Public License](public/assets/licenses/Arphic-Public-License.txt) 分发。这里按字拆分保存，笔画内容未修改。
+- 朗读声音：500 个字的字音、词语、例句共 2000 段，由 macOS 系统语音“婷婷”预先生成（`node scripts/make-audio.mjs`），放在 `public/assets/audio/`。平板不需要安装中文语音包就能听到；故事和小兔的信仍用平板自带的朗读。苹果系统语音只允许个人、非商业用途，若要商用需换成有授权的配音。
 - 楷体字形：`LXGW WenKai`（霞鹜文楷）1.530，按 [SIL Open Font License 1.1](public/assets/licenses/LXGW-WenKai-OFL.txt) 使用；这里只截取了 500 个学习字做成网页字体（约 110 KB），用于大字和字库卡片，让 Android 平板也能看到楷体。
 - 描红引擎：`hanzi-writer` 3.7.3，[MIT License](public/assets/licenses/hanzi-writer-MIT.txt)。
 - 小型事物图标：Twemoji 16.0.1，图形按 [CC BY 4.0](public/assets/licenses/twemoji-graphics.txt) 许可；版权及归属 [Twemoji 项目](https://github.com/jdecked/twemoji)。应用只用于学习场景，自绘图解和页面样式为本项目内容。
