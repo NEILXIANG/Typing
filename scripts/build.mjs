@@ -4,7 +4,7 @@ import {fileURLToPath} from 'node:url';
 import {WORDS} from '../public/data.js';
 
 const root=new URL('../public/',import.meta.url);
-const modules=['extra-data','data','core','audio','scenes','app'];
+const modules=['extra-data','data','core','life','audio','scenes','app'];
 let bundle='/* Cindy 汉字小岛 · 单文件脚本，供 offline.html 使用 */\n(()=>{\n"use strict";\n';
 for(const name of modules){
   const source=await readFile(new URL(`${name}.js`,root),'utf8');
