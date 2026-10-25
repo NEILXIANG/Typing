@@ -74,7 +74,7 @@ footer{font-size:0.75rem;color:#7f8ba0}
 /* ---- Apple-style pass A: motion, type scale ---- */
 html{font-size:100%}
 @keyframes fade-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-#app>*{animation:fade-in .18s ease-out}
+#app.enter>*{animation:fade-in .18s ease-out}
 .sentence em.filled.ok{background:#e4f3e7;color:var(--green)}
 .sentence em.filled.no{background:#fff1dc;color:#8a6a2a;text-decoration:line-through}
 .brand span{font-size:1.25rem}
@@ -103,3 +103,16 @@ main{min-height:calc(100dvh - 120px)}
 .segmented button{min-width:52px;min-height:44px;padding:8px 14px;border-radius:10px;font-size:1rem;color:var(--muted)}
 .segmented button.on{background:#fff;box-shadow:0 1px 4px #0002;font-weight:650;color:var(--blue)}
 .form-row:has(.segmented){flex-wrap:wrap}
+/* ---- Stable layout while answering: nothing below the choices moves ---- */
+.feedback{min-height:68px;display:flex;align-items:center;justify-content:center}
+.study-footer{min-height:64px}
+.sentence em{display:inline-block;min-width:3.4em;text-align:center}
+.choice.correct:disabled,.choice.selected:disabled{opacity:1}
+.hint-box{margin:0 auto 12px}
+.write-actions{min-height:52px;align-items:center}
+.write-actions .help{visibility:hidden}
+.write-actions.show-help .help{visibility:visible}
+.write-actions.done{visibility:hidden}
+.learn-more{animation:fade-in .25s ease-out}
+.words-line{min-height:48px}
+.hint-inline{font-size:1.25rem;font-weight:500}.hint-inline b{font-family:"Island Kai","Kaiti SC",KaiTi,STKaiti,serif;font-size:1.6rem;font-weight:400;margin:0 2px}
