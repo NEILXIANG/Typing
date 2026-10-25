@@ -231,3 +231,5 @@ main{min-height:calc(100dvh - 120px)}
 .stage-pill.stage-write{background:#eaf6ee;border-color:#cfe9d7;color:#2f7d4c}
 .stage-pill.stage-transfer{background:#fff4d6;border-color:#f3e0a6;color:#8a5f0a}
 .today .today-art{width:100%}
+.buddy{width:44px;height:58px;object-fit:contain}
+.write-top .buddy{width:36px;height:48px}

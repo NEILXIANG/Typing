@@ -1,7 +1,7 @@
 // Offline cache: the app shell is network-first (fresh when online, cached when not);
 // stroke data, illustrations, fonts and icons are cache-first because they never change.
-const VERSION='island-v1';
-const SHELL=['./','index.html','app.js','core.js','data.js','extra-data.js','strokes.js','life.js','audio.js','scenes.js','styles.css','manifest.webmanifest','assets/hanzi-writer.min.js','assets/island.svg','assets/island-icon.svg','assets/fonts/island-kai.woff2'];
+const VERSION='island-v2';
+const SHELL=['./','index.html','app.js','core.js','data.js','extra-data.js','strokes.js','life.js','audio.js','scenes.js','styles.css','manifest.webmanifest','assets/hanzi-writer.min.js','assets/island.svg','assets/island-icon.svg','assets/buddy.svg','assets/fonts/island-kai.woff2'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(VERSION).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==VERSION).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
 self.addEventListener('fetch',e=>{
