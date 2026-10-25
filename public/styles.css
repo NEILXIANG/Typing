@@ -333,3 +333,4 @@ main{min-height:calc(100dvh - 120px)}
  .pick small{display:none}
  .today-summary{margin:6px 0 12px;font-size:1.35rem}
 }
+.feedback .neutral{font-size:1.15rem;color:var(--muted);font-weight:500}
