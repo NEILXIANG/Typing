@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {WORDS} from '../public/data.js';
-import {lookAlike} from '../public/core.js';
+import {lookAlike,difficultyOf} from '../public/core.js';
 import {LIFE_QUESTS,lifeQuest} from '../public/life.js';
 import {recordWriting,writeModeFor,writeStageOf,placementPick,placementResult,recordDiagnosed,freshState,createPlan,recordRecognition,stageOf,addDays,completeSession,optionsFor,validateBackup,dueWords} from '../public/core.js';
 const day='2026-10-24';
@@ -26,3 +26,4 @@ test('two new characters a day is a valid setting and survives backup',()=>{cons
 test('look-alike characters are never introduced on the same day',()=>{for(const level of ['auto','g1','g2'])for(const target of [3,5]){const s=freshState();s.settings.level=level;s.settings.target=target;for(let d=0;d<12;d++){const date=addDays(day,d),p=createPlan(s,WORDS,date);assert.equal(p.newChars.length,target);for(const a of p.newChars)for(const b of p.newChars)if(a!==b)assert(!lookAlike(a,b),`${date}: ${a}/${b}`);for(const c of p.newChars)recordRecognition(s,c,{clean:true,wasNew:true},date);}}});
 test('writing prefers a character already recognised on an earlier day over a new one',()=>{const s=freshState();recordRecognition(s,'林',{clean:true,wasNew:true},day);recordRecognition(s,'森',{clean:false,wasNew:true},day);const p=createPlan(s,WORDS,'2026-10-25');assert(p.reviewChars.includes('林')&&p.reviewChars.includes('森'));assert.deepEqual(p.writeChars,['林']);s.settings.writeTarget=2;assert.deepEqual(createPlan(s,WORDS,'2026-10-25').writeChars,['林',createPlan(s,WORDS,'2026-10-25').newChars[0]]);});
 test('dragged decoration positions are kept only for owned items and clamped',()=>{const raw=freshState();raw.owned=['flower'];raw.decorPos={flower:{x:140,y:-5},kite:{x:10,y:10},bad:'x'};const s=validateBackup(raw,WORDS);assert.deepEqual(s.decorPos,{flower:{x:100,y:0}});});
+test('difficulty follows strokes and look-alikes; easier characters of a theme come first and are written first',()=>{assert(difficultyOf('人')<difficultyOf('森'));assert(difficultyOf('晴')>difficultyOf('日'));const s=freshState();s.settings.target=5;const p=createPlan(s,WORDS,day);const units=p.newChars.map(c=>WORDS.find(w=>w.char===c).unit);for(let i=1;i<p.newChars.length;i++)if(units[i]===units[i-1])assert(difficultyOf(p.newChars[i])>=difficultyOf(p.newChars[i-1]),p.newChars.join());const t=freshState();recordRecognition(t,'森',{clean:true,wasNew:true},day);recordRecognition(t,'人',{clean:true,wasNew:true},day);assert.deepEqual(createPlan(t,WORDS,'2026-10-25').writeChars,['人']);});
