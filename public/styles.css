@@ -79,3 +79,11 @@ html{font-size:100%}
 .sentence em.filled.no{background:#fff1dc;color:#8a6a2a;text-decoration:line-through}
 .brand span{font-size:1.25rem}
 main{min-height:calc(100dvh - 120px)}
+/* ---- Apple-style pass B: one icon set everywhere ---- */
+.emoji{width:1.2em;height:1.2em;vertical-align:-.22em;display:inline-block;object-fit:contain}
+.item-art .emoji{width:56px;height:56px}
+.decoration .emoji{width:1em;height:1em;vertical-align:baseline}
+.stamp span .emoji{width:34px;height:34px}
+.theme-icon .emoji{width:36px;height:36px}
+.mentor i .emoji{width:32px;height:32px}
+.badge-hero .emoji{width:72px;height:72px}
