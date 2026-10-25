@@ -11,7 +11,7 @@ cd /Users/neilxiang/Documents/Typing
 npm run dev
 ```
 
-电脑打开 `http://localhost:4173`。Android 平板或 iPad 与电脑在同一 Wi-Fi 时，打开 `http://电脑的局域网IP:4173`；电脑防火墙需要允许 Node.js 接受局域网连接。正式部署后，平板直接打开 Cloudflare 的 HTTPS 网址即可。
+电脑打开 `http://localhost:4173`。Android 平板或 iPad 与电脑在同一 Wi-Fi 时，打开 `http://电脑的局域网IP:4173`；电脑防火墙需要允许 Node.js 接受局域网连接。日常使用可在平板直接打开已部署的 [Cloudflare 网页](https://typing.neilxiang.workers.dev/)，无需让电脑一直开机。
 
 也提供 `public/offline.html`：运行 `npm run build` 后，保持整个 `public` 文件夹的目录结构，将其复制到设备上并尝试用浏览器打开 `offline.html`。页面代码、插画和 500 字笔顺数据都在本地。某些移动浏览器会限制 `file://` 页面的本地存储或脚本；因此 Android/iPad 日常使用更推荐网页网址。浏览器朗读取决于系统安装的中文语音；部分声音需要联网。背景音乐由浏览器即时合成，不需要网络或 API 密钥。
 
@@ -44,11 +44,14 @@ git commit -m "Update Cindy's Hanzi island"
 git push
 ```
 
-在 **Cloudflare Pages** 中连接该 Git 仓库：框架选择 None，项目根目录留默认，构建命令填 `npm run build`，输出目录填 `public`。构建环境需 Node.js 18 或更新版本。`public/_headers` 供 Pages 使用。
+当前使用 **Cloudflare Workers 静态资源**，正式地址为 https://typing.neilxiang.workers.dev/ 。`wrangler.jsonc` 指向 `./public`。推送 GitHub 不会自动更新这个网址；每次修改后运行：
 
-如果使用 **Workers 静态资源**，项目已有 `wrangler.jsonc`，其中资源目录为 `./public`。构建后可按 Cloudflare 官方流程运行 Wrangler 部署。为避免 Pages 与 Workers 设置混淆，建议首次使用 Pages 的 Git 自动部署。
+```bash
+npm run build
+npx wrangler deploy
+```
 
-官方参考：[Pages 构建配置](https://developers.cloudflare.com/pages/configuration/build-configuration/) · [Workers 静态资源](https://developers.cloudflare.com/workers/static-assets/binding/)。
+首次在新电脑运行需通过 Wrangler 登录同一个 Cloudflare 账户。官方参考：[Workers 静态资源](https://developers.cloudflare.com/workers/static-assets/binding/)；若以后希望 GitHub 推送后自动发布，可在 Cloudflare 控制台另行配置构建与部署。
 
 ## 素材和许可
 
