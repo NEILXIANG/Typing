@@ -280,3 +280,56 @@ main{min-height:calc(100dvh - 120px)}
 /* Opt out of the browser's forced dark mode (Huawei/Chrome "darken websites"); the island is designed for a light page. */
 :root{color-scheme:only light}
 .dialog-fallback[open]{display:block;position:fixed;top:10vh;left:0;right:0;margin:0 auto;z-index:100;box-shadow:0 0 0 100vmax #20304766}
+/* ---- Landscape tablets (≈700–820px tall): every study screen fits without scrolling ---- */
+@media (orientation:landscape) and (max-height:820px){
+ body.focus .topbar{display:none}
+ body.focus main{padding:10px 0 12px;min-height:0}
+ body.focus .practice-top{margin-bottom:6px}
+ body.focus .practice-top .text-button{min-height:40px}
+ body.focus .progress{margin:4px 0 10px!important}
+ .study-card{padding:14px 28px 12px!important;border-top-width:5px}
+ .study-card h2{font-size:1.4rem;margin:4px 0}
+ .study-card .study-sub{font-size:1rem;margin:0}
+ .study-card .button.soft{margin-top:8px!important;min-height:44px;padding:8px 20px}
+ .choices{margin:10px auto;gap:10px;max-width:560px}
+ .choice{min-height:68px;font-size:2.3rem;padding:8px}
+ .choice.word-choice{min-height:60px;font-size:1.5rem}
+ .feedback{min-height:52px;padding:4px}
+ .feedback.success,.feedback.hint{font-size:1.25rem}
+ .buddy{width:36px;height:46px}
+ .feedback .mark{width:38px;height:38px}
+ .study-footer{min-height:50px;margin-top:4px}
+ .study-footer .button{min-height:48px}
+ .sentence{margin:8px auto;font-size:1.1rem;line-height:1.8}
+ .learn-layout{margin:4px 0;grid-template-columns:1fr 240px;gap:16px}
+ .big-char{font-size:84px;line-height:1.1;margin:2px 0}
+ .pinyin{margin-top:4px;font-size:1.2rem}
+ .scene-stage{max-height:150px}
+ .words-line{margin:8px 0;min-height:44px}
+ .learn-more .text-button{min-height:40px}
+ .write-top{min-height:36px}
+ .writer-box{width:min(100%,400px,calc(100vh - 360px))!important}
+ .write-actions{min-height:44px;margin:4px 0}
+ .completion{padding:14px 28px!important}
+ .completion h1{font-size:1.6rem;margin:6px 0}
+ .hero-island{max-width:min(300px,30vh)}
+ .done-lines{margin:6px auto 8px}
+ .done-lines p{font-size:1.05rem;line-height:1.6;margin:2px 0}
+ .completion .pill.yellow{margin:4px auto 10px!important}
+ .badge-won{margin:2px 0 8px}
+ .letter-hint{margin:0 0 6px}
+ .completion-actions .button.big{min-height:54px;padding:12px 40px}
+ .completion-actions>div{margin-top:4px!important}
+}
+@media (orientation:landscape) and (max-height:820px){
+ .today{margin-top:0}
+ .today .greet{font-size:1.25rem}
+ .today:has(.island-pick) .today-art{max-width:min(420px,30vh)}
+ .today-note{margin:4px 0 0}
+ .today-ask{margin:6px 0 4px;font-size:1.05rem}
+ .island-pick{gap:10px}
+ .pick{padding:8px 10px;flex-direction:row;gap:10px;text-align:left;max-width:260px}
+ .pick .emoji{width:32px;height:32px}
+ .pick small{display:none}
+ .today-summary{margin:6px 0 12px;font-size:1.35rem}
+}
