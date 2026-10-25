@@ -3,7 +3,7 @@ export const STORAGE_KEY='cindy-island-v1';
 export const INTERVALS=[1,3,7,14,30,60,90];
 export function today(date=new Date()){return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;}
 export function addDays(day,n){const d=new Date(day+'T12:00:00');d.setDate(d.getDate()+n);return today(d);}
-export function freshState(){return {version:1,settings:{target:3,writeTarget:1,level:'auto',musicVolume:.12,name:'Cindy'},placement:null,onboarded:false,tier:1,records:{},days:{},sessions:[],stars:0,owned:[],decor:[],active:null,confusions:[],family:{},writing:{},life:{},decorPos:{}};}
+export function freshState(){return {version:1,settings:{target:3,writeTarget:1,level:'auto',musicVolume:.12,name:'Cindy'},placement:null,onboarded:false,badges:{},tier:1,records:{},days:{},sessions:[],stars:0,owned:[],decor:[],active:null,confusions:[],family:{},writing:{},life:{},decorPos:{}};}
 export function getDay(state,day=today()){return state.days[day]||{newChars:[],reviewChars:[],written:[],points:0};}
 export function dueWords(state,words,day=today()){return words.filter(w=>state.records[w.char]?.due<=day&&state.records[w.char]?.lastDay!==day).sort((a,b)=>{const ra=state.records[a.char],rb=state.records[b.char];return ra.strength-rb.strength||ra.due.localeCompare(rb.due)||rb.mistakes-ra.mistakes;});}
 export const REVIEW_CAP=5,REVIEW_CAP_HIGH=7,QUICK_CAP=5,BACKLOG=8;
@@ -59,6 +59,9 @@ export function recordWriting(state,char,{level='trace',completed=false,strokeEr
 // Tracing on one day, then writing without the outline on a later day, separates copying from remembering.
 export function writeModeFor(state,char,day=today()){return state.writing?.[char]?.traceDays.some(d=>d<day)?'blind':'trace';}
 export function writeStageOf(r){return !r?'未练写':r.blindDays.length>=2?'写得牢':r.blindDays.length?'能独立写':r.traceDays.length?'描红完成':'练习中';}
+// Milestones a child can feel; each is earned once and dated.
+export const BADGES=[{id:'first',name:'第一个字',desc:'见过了第一个字',test:s=>Object.keys(s.records).length>=1},{id:'ten',name:'十个字',desc:'见过十个字了',test:s=>Object.keys(s.records).length>=10},{id:'blind',name:'凭记忆写出来',desc:'不看描红写出了一个字',test:s=>Object.values(s.writing||{}).some(r=>r.blindDays.length>0)},{id:'week',name:'一周来了五天',desc:'这一周来了五天',test:(s,day)=>{let n=0;for(let i=0;i<7;i++){const d=s.days[addDays(day,-i)];if(d&&(d.newChars.length+d.reviewChars.length+d.written.length)>0)n++;}return n>=5;}},{id:'secure',name:'十个字记得牢',desc:'十个字过了几天还记得',test:s=>Object.values(s.records).filter(isSecure).length>=10}];
+export function awardBadges(state,day=today()){state.badges??={};const won=[];for(const b of BADGES){if(!state.badges[b.id]&&b.test(state,day)){state.badges[b.id]=day;won.push(b);}}return won;}
 export function stageOf(r){return !r?'未探索':isSecure(r)?'记得牢':r.strength>=2&&r.cleanDays.length>=2?'在长大':'小芽';}
 export function completeSession(state,session,day=today()){
  if(state.sessions.some(s=>s.id===session.id))return null;
@@ -101,6 +104,7 @@ export function validateBackup(raw,words){
  if(raw.decorPos&&typeof raw.decorPos==='object')for(const [k,v] of Object.entries(raw.decorPos)){if(s.owned.includes(k)&&v&&Number.isFinite(v.x)&&Number.isFinite(v.y))s.decorPos[k]={x:Math.max(0,Math.min(100,Math.round(v.x))),y:Math.max(0,Math.min(100,Math.round(v.y)))};}
  if(Array.isArray(raw.sessions))s.sessions=raw.sessions.filter(r=>r&&typeof r.id==='string'&&date.test(r.day)&&Number.isFinite(r.score)&&Number.isFinite(r.total)&&Number.isFinite(r.earned)).slice(-180).map(r=>({id:r.id.slice(0,40),day:r.day,earned:num(r.earned,1000),score:num(r.score,100),independent:num(r.independent,100),total:num(r.total,100),written:num(r.written,100),help:num(r.help,100),chars:Array.isArray(r.chars)?r.chars.filter(c=>valid.has(c)):[]}));
  if(raw.family&&typeof raw.family==='object')for(const [k,v] of Object.entries(raw.family)){if(date.test(k))s.family[k]=!!v;}
+ if(raw.badges&&typeof raw.badges==='object')for(const [k,v] of Object.entries(raw.badges)){if(BADGES.some(b=>b.id===k)&&date.test(v))s.badges[k]=v;}
  if(raw.writing&&typeof raw.writing==='object')for(const [c,r] of Object.entries(raw.writing)){if(!valid.has(c)||!r||!date.test(r.lastDay))continue;const strokeErrors={};if(r.strokeErrors&&typeof r.strokeErrors==='object')for(const [k,v] of Object.entries(r.strokeErrors)){const i=Number(k);if(Number.isInteger(i)&&i>=0&&i<64)strokeErrors[i]=num(v,10000);}s.writing[c]={char:c,attempts:num(r.attempts,10000),traceDays:days(r.traceDays),blindDays:days(r.blindDays),strokeErrors,ms:num(r.ms,36e6),downshifts:num(r.downshifts,10000),pending:r.pending===true,lastDay:r.lastDay};}
  if(raw.life&&typeof raw.life==='object')for(const [k,v] of Object.entries(raw.life)){if(date.test(k)&&v&&/^[a-z]{2,12}$/.test(v.id)&&valid.has(v.char))s.life[k]={id:v.id,char:v.char};}
  return s;

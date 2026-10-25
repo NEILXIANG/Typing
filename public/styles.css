@@ -177,3 +177,19 @@ main{min-height:calc(100dvh - 120px)}
 .dots i{width:9px;height:9px;border-radius:50%;background:#dcd6c8}.dots i.on{background:var(--blue);width:22px;border-radius:6px}
 .choices.gate{grid-template-columns:repeat(4,1fr);max-width:none;gap:10px;margin:20px 0 0}
 .choices.gate .choice{font-size:1.6rem;min-height:64px}
+/* ---- Milestones, next goal, staged completion ---- */
+.completion .done-lines p{animation:fade-in .4s ease-out both}
+.completion .pill.yellow{animation:fade-in .4s ease-out 1.15s both}
+.badge-won{animation:fade-in .5s ease-out both;margin:4px 0 14px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.badge{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:30px;background:#fff1c2;color:#8a5f0a;font-weight:650;font-size:1.05rem}
+.badge .ico{width:20px;height:20px}
+.badge-won small{color:var(--muted)}
+.goal{display:flex;align-items:center;gap:18px;margin-bottom:20px;padding:18px 22px}
+.goal-art .emoji{width:56px;height:56px}
+.goal-text{flex:1}.goal-text b{font-size:1.15rem}.goal-text .progress{margin:10px 0 6px}.goal-text small{color:var(--muted)}
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:8px}
+.badge-card{display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 10px;border:2px dashed #ddd7c8;border-radius:20px;text-align:center;opacity:.6}
+.badge-card .round-icon{background:#f3efe4;color:#b9b19d}
+.badge-card.got{opacity:1;border-style:solid;border-color:#f0d98a;background:#fffbea}
+.badge-card.got .round-icon{background:#fff1c2;color:#c08a12}
+.badge-card b{font-size:1rem}.badge-card small{color:var(--muted);font-size:.85rem}
