@@ -87,3 +87,19 @@ main{min-height:calc(100dvh - 120px)}
 .theme-icon .emoji{width:36px;height:36px}
 .mentor i .emoji{width:32px;height:32px}
 .badge-hero .emoji{width:72px;height:72px}
+/* ---- Apple-style pass C ---- */
+.stroke-dots{display:flex;gap:7px;justify-content:center;margin:4px 0 10px;min-height:10px}
+.stroke-dots i{width:10px;height:10px;border-radius:50%;background:#dfe5ef;transition:background .2s}
+.stroke-dots i.done{background:#8bbb97}
+.grid-label{position:absolute;left:10px;right:10px;top:10px;z-index:2;text-align:center;font-size:.95rem;line-height:1.5;color:#66738a;pointer-events:none;background:#fffdf9d9;border-radius:10px;padding:5px 10px}
+.grid-label button{pointer-events:auto}
+.hero-island{max-width:300px;margin:0 auto 6px}
+.hero-island .decoration{font-size:22px}
+@keyframes stamp-in{0%{transform:scale(1.5) rotate(-12deg);opacity:0}60%{transform:scale(.95) rotate(2deg);opacity:1}100%{transform:none}}
+.stamp.fresh{animation:stamp-in .5s ease-out}
+.garden .decoration{touch-action:none;cursor:grab;transition:transform .15s}
+.garden .decoration.dragging{transform:scale(1.15);cursor:grabbing;filter:drop-shadow(0 10px 8px #0002)}
+.segmented{display:inline-flex;background:#eef1f6;border-radius:12px;padding:3px;gap:2px}
+.segmented button{min-width:52px;min-height:44px;padding:8px 14px;border-radius:10px;font-size:1rem;color:var(--muted)}
+.segmented button.on{background:#fff;box-shadow:0 1px 4px #0002;font-weight:650;color:var(--blue)}
+.form-row:has(.segmented){flex-wrap:wrap}
