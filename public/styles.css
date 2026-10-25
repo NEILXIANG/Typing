@@ -195,3 +195,12 @@ main{min-height:calc(100dvh - 120px)}
 .badge-card b{font-size:1rem}.badge-card small{color:var(--muted);font-size:.85rem}
 .completion-actions{animation:fade-in .4s ease-out 1.2s both}
 .today-note{font-size:1.1rem;color:var(--green);margin:12px 0 0;font-weight:600}
+/* ---- Asset & motion pass ---- */
+.scene-symbol{filter:saturate(.82)}
+.text-button .ico,.button .ico{flex-shrink:0}
+.sparkles span{line-height:0}
+/* ambient motion stops after a few cycles so it never competes with the start button or the result lines */
+.today-art .decoration,.hero-island .decoration{animation-iteration-count:3}
+.welcome-art img{animation:grow-in .6s ease-out both}
+.three>div{animation:fade-in .35s ease-out both}.three>div:nth-child(2){animation-delay:.08s}.three>div:nth-child(3){animation-delay:.16s}
+.motion-float,.motion-sway,.motion-run,.motion-rain,.motion-glow,.motion-grow{animation-iteration-count:2}
