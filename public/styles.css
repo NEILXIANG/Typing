@@ -48,3 +48,4 @@ main{min-height:calc(100dvh - 152px)}
 @media(orientation:landscape) and (max-height:840px){main{padding-top:22px}.today{margin-top:1vh}.today-art{max-width:min(420px,36vh)}.today .greet{font-size:20px;margin-bottom:0}.today-summary{font-size:22px;margin:10px 0 16px}.study-card{min-height:0;padding:22px 32px}.choices{margin:16px auto}.choice{min-height:84px}.writer-box{width:min(100%,400px,46vh)}.big-char{font-size:92px}.learn-layout{margin:10px 0}.practice-top{margin-bottom:12px}.completion{padding:28px 30px}}
 @media(max-width:650px){.text-button{font-size:15px}.choice{min-height:88px;font-size:40px}.button{font-size:16px}.nav-item{font-size:11px;min-height:0}}
 @media(orientation:landscape) and (max-height:840px){body.focus main{min-height:0;padding:16px 0 20px}body.focus .study-card{padding:18px 32px}}
+.choice.selected{border-color:var(--blue);background:var(--blue-soft)}
