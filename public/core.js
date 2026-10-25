@@ -20,7 +20,9 @@ export function createPlan(state,words,day=today()){
  if(state.settings.level==='auto'&&tier===3&&fresh.length>1){const foundation=available.find(w=>w.grade===1&&!fresh.includes(w));if(foundation)fresh[fresh.length-1]=foundation;}
  // Weak characters take the full two-question slots; securely held ones get separate one-question slots so they are still checked.
  const weak=dueAll.filter(w=>!isSecure(state.records[w.char])),secure=dueAll.filter(w=>isSecure(state.records[w.char])).sort((a,b)=>state.records[a.char].due.localeCompare(state.records[b.char].due));
- const reviews=[...weak.slice(0,pressure?REVIEW_CAP_HIGH:REVIEW_CAP),...secure.slice(0,QUICK_CAP)];
+ // Review slots follow the agreed rhythm: five a day, seven when a backlog builds. Securely held characters get a cheap one-question slot and may stretch a little further.
+ const weakCap=pressure?REVIEW_CAP_HIGH:REVIEW_CAP,quickCap=Math.min(8,QUICK_CAP+Math.floor(secure.length/3));
+ const reviews=[...weak.slice(0,weakCap),...secure.slice(0,quickCap)];
  const writingLeft=Math.max(0,(d.writeTarget??state.settings.writeTarget)-d.written.length);
  // Writing runs on its own track: characters left unfinished on an earlier day come back first.
  const writeChars=Object.values(state.writing||{}).filter(r=>r.pending&&r.lastDay!==day&&state.records[r.char]).sort((a,b)=>a.lastDay.localeCompare(b.lastDay)).slice(0,writingLeft).map(r=>r.char);
@@ -66,7 +68,10 @@ export function stageOf(r){return !r?'未探索':isSecure(r)?'记得牢':r.stren
 export function completeSession(state,session,day=today()){
  if(state.sessions.some(s=>s.id===session.id))return null;
  let earned=0,independent=0,attempts=0;const used=[];
+ // Characters already paid for when she took a break are not paid twice.
+ const alreadyPaid=session.partialChars||[];
  for(const char of [...session.plan.reviewChars,...session.plan.newChars]){
+  if(alreadyPaid.includes(char))continue;
   const p=session.results[char];if(!p?.recognized||!p?.transfer)continue;
   const clean=p.mistakes===0&&!p.hinted;
   if(recordRecognition(state,char,{clean,mistakes:p.mistakes,wasNew:session.plan.newChars.includes(char)},day)){
@@ -76,7 +81,7 @@ export function completeSession(state,session,day=today()){
   }
  }
  state.days[day]??={newChars:[],reviewChars:[],written:[],points:0};
- for(const char of session.plan.writeChars||[]){if(used.includes(char)||!session.results[char]?.written||state.days[day].written.includes(char))continue;state.days[day].written.push(char);earned+=2;}
+ for(const char of session.plan.writeChars||[]){if(used.includes(char)||alreadyPaid.includes(char)||!session.results[char]?.written||state.days[day].written.includes(char))continue;state.days[day].written.push(char);earned+=2;}
  const score=attempts?Math.round(100*independent/attempts):0;
  state.stars+=earned;state.days[day]??={newChars:[],reviewChars:[],written:[],points:0};state.days[day].points+=earned;
  const result={id:session.id,day,earned,score,independent,total:attempts,chars:used,written:[...new Set([...used,...(session.plan.writeChars||[])])].filter(c=>session.results[c]?.written).length,help:Object.values(session.results).filter(p=>p.hinted).length};
@@ -85,6 +90,27 @@ export function completeSession(state,session,day=today()){
  if(state.settings.level==='auto'&&recent.length===2&&recent.every(s=>s.score>=85))state.tier=Math.min(3,state.tier+1);
  if(score<50&&attempts>=3&&state.settings.level==='auto')state.tier=Math.max(1,state.tier-1);
  return result;
+}
+// A break is not a failure: everything she already answered correctly stays earned, so leaving mid-session never throws the day's work away.
+// The session stays open so she can continue; the characters settled here are skipped when the session finally ends.
+export function settlePartial(state,session,day=today()){
+ if(!session)return null;
+ const plan=session.plan||{},results=session.results||{};
+ state.days[day]??={newChars:[],reviewChars:[],written:[],points:0};
+ let earned=0;const used=[];
+ for(const char of [...(plan.reviewChars||[]),...(plan.newChars||[])]){
+  const p=results[char];if(!p?.recognized||!p?.transfer)continue;
+  const clean=p.mistakes===0&&!p.hinted;
+  if(recordRecognition(state,char,{clean,mistakes:p.mistakes,wasNew:(plan.newChars||[]).includes(char)},day)){
+   earned+=clean?3:1;used.push(char);
+   const r=state.records[char];if(isSecure(r)&&!r.secureDay){r.secureDay=day;earned+=2;}
+   if(p.written&&!state.days[day].written.includes(char)){state.records[char].writeCount++;state.days[day].written.push(char);earned+=2;}
+  }
+ }
+ if(!used.length)return null;
+ state.stars+=earned;state.days[day].points+=earned;
+ session.partialSettled=true;session.partialChars=used;
+ return {earned,chars:used};
 }
 export function shuffle(a,random=Math.random){const out=[...a];for(let i=out.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[out[i],out[j]]=[out[j],out[i]];}return out;}
 const SIMILAR={人:'入八大',口:'日目回',手:'毛于牛',足:'走是定',耳:'目自日',目:'日自白',心:'必少小',头:'大买太',日:'目白田',月:'用目日',水:'木永小',火:'人灭大',山:'出凶仙',石:'右后古',田:'由甲申',土:'士干王',一:'二三十',二:'三一工',三:'王二丰',四:'西回田',五:'互王工',六:'穴八大',七:'匕十九',八:'人入六',大:'太天犬',小:'少水木',多:'夕名各',少:'小步沙',上:'下止土',下:'上卜不',左:'右在工',右:'左石后',木:'本术禾',禾:'木米未',米:'来木禾',竹:'个节竿',花:'化草华',草:'早花苗',叶:'吐汁什',果:'里课棵',天:'夫大无',地:'他池也',风:'凤凡几',雨:'两而雪',云:'去运元',电:'申田由',星:'是早生',光:'先兴尖',妈:'吗码蚂',爸:'爬爷巴',家:'冢象安',爱:'受友爰',我:'找成钱',你:'他您作',他:'她地池',她:'他好妈',吃:'气乞汽',喝:'渴唱揭',走:'足起赶',跑:'抱泡炮',看:'着春目',听:'叶诉折',说:'悦脱税',笑:'笔笛笼',森:'林木焚',林:'森休材',杨:'扬场汤',柳:'迎卯抑',松:'公枫柏',晴:'清睛情',清:'晴睛请',睛:'晴清情',请:'清情晴',情:'晴清睛',暖:'缓援爱',冷:'铃玲领',雪:'雷雨寻',雾:'雪雷需',雷:'雪雾电',露:'路霜雾',冰:'水冷凉',季:'李秀香',温:'湿渴汤',凉:'惊京冷',秋:'伙和种',猫:'描苗锚',狗:'句拘钩',猪:'诸著堵',猴:'候喉侯',狐:'孤瓜弧',狸:'理里埋',狮:'师帅筛',狼:'狠良浪',蝶:'碟谍蝴',蛙:'娃洼挂',蚁:'议仪义',蜂:'锋峰逢',窗:'空穿穷',户:'尸卢声',教:'数放故',室:'宝定至',课:'棵颗果',桌:'卓掉棹',椅:'奇骑倚',铅:'沿船钒',笔:'毛笑笛',纸:'低底抵',操:'澡燥噪',场:'扬汤杨',饭:'板反返',饱:'抱跑泡',菜:'采彩茶',味:'未妹昧',甜:'甘舌恬',糖:'塘唐搪',蛋:'虫蚕旦',糕:'羔羚精',烧:'浇绕晓',洗:'先选冼',净:'静争挣',碗:'腕宛婉',愿:'原顾源',望:'忘旺王',喜:'吉善嘉',欢:'吹饮次',惊:'凉京景',忙:'芒忘亡',怕:'拍伯白',谢:'射榭躲',礼:'补扎孔',助:'组且姐',信:'言住位',湖:'糊胡蝴',海:'梅每悔',洋:'样羊祥',湾:'弯变恋',岛:'鸟乌鸣',桥:'乔侨娇',船:'沿铅般',岸:'岩崖炭',景:'京惊晾',游:'流旅族',路:'洛露各',旅:'族旋游',童:'重章量',话:'活括舌',故:'放做古',事:'吏史更',梦:'林禁楚',精:'睛晴请',灵:'寻录灭',宝:'实玉定',贝:'见页负',勇:'男甬涌',敢:'取散教',胜:'姓性生',眼:'很根银',观:'现欢规',察:'祭擦蔡',植:'值直置',物:'牧牺特',根:'很跟眼',芽:'牙呀穿',泉:'白水原',溪:'奚蹊鸡',认:'从队让',真:'直具填',读:'卖续实',写:'与马鸟',练:'炼拣栋',习:'刁羽刃',思:'恩想息',考:'老孝者',记:'纪己计',忘:'忙亡妄',坚:'竖紧贤',持:'待诗特'};
