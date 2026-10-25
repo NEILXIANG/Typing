@@ -6,9 +6,9 @@ function tick(){if(!enabled||document.hidden||!context||context.state!=='running
 export async function toggleMusic(){if(!ensureContext())throw Error('这个浏览器暂不支持背景音乐。');enabled=!enabled;if(enabled){await context.resume();master.gain.setTargetAtTime(volume,context.currentTime,.3);tick();timer=setInterval(tick,1400);}else{clearInterval(timer);master.gain.setTargetAtTime(0,context.currentTime,.2);}return enabled;}
 export function setVolume(v){volume=v;if(master)master.gain.setTargetAtTime(enabled?(speaking?v*.12:v):0,context.currentTime,.15);}
 export function musicOn(){return enabled;}
-export function speak(text,onUnavailable=()=>{}){
+export function speak(text,onUnavailable=()=>{},opts={}){
  if(!('speechSynthesis'in window)){onUnavailable();return;}
- window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='zh-CN';u.rate=.78;const voices=window.speechSynthesis.getVoices();const voice=voices.find(v=>v.voiceURI===preferredVoice)||voices.find(v=>/^zh[-_]CN/i.test(v.lang))||voices.find(v=>/^zh/i.test(v.lang));if(voice)u.voice=voice;
+ window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='zh-CN';u.rate=opts.rate||.78;u.pitch=opts.pitch||1;const voices=window.speechSynthesis.getVoices();const voice=voices.find(v=>v.voiceURI===preferredVoice)||voices.find(v=>/^zh[-_]CN/i.test(v.lang))||voices.find(v=>/^zh/i.test(v.lang));if(voice)u.voice=voice;
  speaking=true;setVolume(volume);const restore=()=>{speaking=false;setVolume(volume);};u.onend=restore;u.onerror=e=>{restore();if(!['interrupted','canceled'].includes(e.error))onUnavailable();};window.speechSynthesis.speak(u);
 }
 export function stopSpeech(){window.speechSynthesis?.cancel();speaking=false;setVolume(volume);}

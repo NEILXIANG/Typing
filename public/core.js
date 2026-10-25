@@ -3,7 +3,7 @@ export const STORAGE_KEY='cindy-island-v1';
 export const INTERVALS=[1,3,7,14,30,60,90];
 export function today(date=new Date()){return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;}
 export function addDays(day,n){const d=new Date(day+'T12:00:00');d.setDate(d.getDate()+n);return today(d);}
-export function freshState(){return {version:1,settings:{target:3,writeTarget:1,level:'auto',musicVolume:.12,name:'Cindy'},placement:null,onboarded:false,badges:{},tier:1,records:{},days:{},sessions:[],stars:0,owned:[],decor:[],active:null,confusions:[],family:{},writing:{},life:{},decorPos:{}};}
+export function freshState(){return {version:1,settings:{target:3,writeTarget:1,level:'auto',musicVolume:.12,name:'Cindy'},placement:null,onboarded:false,badges:{},letters:{},tier:1,records:{},days:{},sessions:[],stars:0,owned:[],decor:[],active:null,confusions:[],family:{},writing:{},life:{},decorPos:{}};}
 export function getDay(state,day=today()){return state.days[day]||{newChars:[],reviewChars:[],written:[],points:0};}
 export function dueWords(state,words,day=today()){return words.filter(w=>state.records[w.char]?.due<=day&&state.records[w.char]?.lastDay!==day).sort((a,b)=>{const ra=state.records[a.char],rb=state.records[b.char];return ra.strength-rb.strength||ra.due.localeCompare(rb.due)||rb.mistakes-ra.mistakes;});}
 export const REVIEW_CAP=5,REVIEW_CAP_HIGH=7,QUICK_CAP=5,BACKLOG=8;
@@ -12,11 +12,8 @@ export function tierFor(state){return state.settings.level==='g1'?Math.min(state
 export function createPlan(state,words,day=today()){
  // When many weak characters are due, consolidation comes first: one fewer new character (two fewer when the backlog doubles, never below 1) and two more review slots.
  const d=getDay(state,day),dueAll=dueWords(state,words,day),weakDue=dueAll.filter(w=>!isSecure(state.records[w.char])).length,pressure=weakDue>BACKLOG,heavy=weakDue>BACKLOG*2,target=d.target??state.settings.target,count=Math.max(0,(heavy?Math.max(1,target-2):pressure?Math.max(2,target-1):target)-d.newChars.length), tier=tierFor(state);
- let available=words.filter(w=>!state.records[w.char]);
- if(state.settings.level==='g1')available=available.filter(w=>w.grade===1);
- if(state.settings.level==='g2')available=available.filter(w=>w.grade===2);
- // Within a theme island the easier characters (fewer strokes, fewer look-alikes) come first.
- available.sort((a,b)=>Math.abs(a.tier-tier)-Math.abs(b.tier-tier)||a.unit-b.unit||difficultyOf(a)-difficultyOf(b));
+ // The child may pick today's island; within the same difficulty band her pick comes first, easier characters first inside it.
+ const pref=Number.isInteger(d.unit)?d.unit:null,available=candidates(state,words).sort((a,b)=>Math.abs(a.tier-tier)-Math.abs(b.tier-tier)||(pref!==null&&(a.unit!==pref)-(b.unit!==pref))||a.unit-b.unit||difficultyOf(a)-difficultyOf(b));
  // Look-alike characters interfere with each other when met on the same day; keep them apart.
  const fresh=[];for(const w of available){if(fresh.length>=count)break;if(fresh.some(f=>lookAlike(f.char,w.char)))continue;fresh.push(w);}
  // Strong readers still check one earlier, untested foundation character each day.
@@ -33,6 +30,9 @@ export function createPlan(state,words,day=today()){
  // A character already held securely is checked with the single word-transfer question only.
  return {day,newChars:fresh.map(w=>w.char),reviewChars:reviews.map(w=>w.char),writeChars,quickReview:reviews.filter(w=>isSecure(state.records[w.char])).map(w=>w.char),pressure};
 }
+function candidates(state,words){let available=words.filter(w=>!state.records[w.char]);if(state.settings.level==='g1')available=available.filter(w=>w.grade===1);if(state.settings.level==='g2')available=available.filter(w=>w.grade===2);return available;}
+// Two islands she can choose between today: the default next one, and the next other island at the same distance from her level.
+export function themeOptions(state,words,day=today()){const tier=tierFor(state),list=candidates(state,words).sort((a,b)=>Math.abs(a.tier-tier)-Math.abs(b.tier-tier)||a.unit-b.unit||difficultyOf(a)-difficultyOf(b));if(!list.length)return [];const gap=w=>Math.abs(w.tier-tier),first=list[0],second=list.find(w=>w.unit!==first.unit&&gap(w)===gap(first));return second?[first.unit,second.unit]:[first.unit];}
 export function placementTier(correct,total){return correct/total>=.8?3:correct/total>=.5?2:1;}
 export function placementPick(words,tier,used,random=Math.random){return shuffle(words.filter(w=>w.tier===tier&&!used.includes(w.char)),random)[0]?.char;}
 export function placementResult(answers){const ok=t=>answers.filter(a=>a.tier===t&&a.correct).length;return ok(3)>=2?3:ok(2)>=2||ok(3)>=1?2:1;}
@@ -99,11 +99,12 @@ export function validateBackup(raw,words){
  s.placement=raw.placement&&typeof raw.placement==='object'?{complete:true}:null;s.onboarded=raw.onboarded===true||!!s.placement;s.tier=[1,2,3].includes(raw.tier)?raw.tier:1;
  const date=/^\d{4}-\d{2}-\d{2}$/,num=(v,max)=>Math.max(0,Math.min(max,Math.round(Number(v)||0))),days=a=>Array.isArray(a)?[...new Set(a.filter(x=>date.test(x)))].slice(-180):[];
  for(const [c,r] of Object.entries(raw.records)){if(!valid.has(c)||!r||!date.test(r.due)||!date.test(r.lastDay))continue;s.records[c]={char:c,firstDay:date.test(r.firstDay)?r.firstDay:r.lastDay,lastDay:r.lastDay,due:r.due,cleanDays:Array.isArray(r.cleanDays)?[...new Set(r.cleanDays.filter(x=>date.test(x)))].slice(-180):[],strength:Math.max(0,Math.min(INTERVALS.length,Number(r.strength)||0)),writeCount:Math.max(0,Math.min(10000,Number(r.writeCount)||0)),mistakes:Math.max(0,Math.min(10000,Number(r.mistakes)||0)),...(r.diagnosed===true?{diagnosed:true}:{}),...(date.test(r.secureDay)?{secureDay:r.secureDay}:{})};}
- if(raw.days&&typeof raw.days==='object')for(const [d,r] of Object.entries(raw.days)){if(date.test(d)&&r)s.days[d]={newChars:Array.isArray(r.newChars)?r.newChars.filter(x=>valid.has(x)):[],reviewChars:Array.isArray(r.reviewChars)?r.reviewChars.filter(x=>valid.has(x)):[],written:Array.isArray(r.written)?r.written.filter(x=>valid.has(x)):[],points:Math.max(0,Number(r.points)||0),...([2,3,4,5].includes(r.target)?{target:r.target}:{}),...([1,2].includes(r.writeTarget)?{writeTarget:r.writeTarget}:{})};}
+ if(raw.days&&typeof raw.days==='object')for(const [d,r] of Object.entries(raw.days)){if(date.test(d)&&r)s.days[d]={newChars:Array.isArray(r.newChars)?r.newChars.filter(x=>valid.has(x)):[],reviewChars:Array.isArray(r.reviewChars)?r.reviewChars.filter(x=>valid.has(x)):[],written:Array.isArray(r.written)?r.written.filter(x=>valid.has(x)):[],points:Math.max(0,Number(r.points)||0),...([2,3,4,5].includes(r.target)?{target:r.target}:{}),...([1,2].includes(r.writeTarget)?{writeTarget:r.writeTarget}:{}),...(Number.isInteger(r.unit)&&r.unit>=0&&r.unit<100?{unit:r.unit}:{})};}
  s.stars=Math.max(0,Math.min(100000,Number(raw.stars)||0));s.owned=Array.isArray(raw.owned)?raw.owned.filter(x=>['flower','bird','mushroom','butterfly','kite','boat','cat','rainbow','balloon','lighthouse','castle','rocket'].includes(x)):[];s.decor=Array.isArray(raw.decor)?raw.decor.filter(x=>s.owned.includes(x)):[];
  if(raw.decorPos&&typeof raw.decorPos==='object')for(const [k,v] of Object.entries(raw.decorPos)){if(s.owned.includes(k)&&v&&Number.isFinite(v.x)&&Number.isFinite(v.y))s.decorPos[k]={x:Math.max(0,Math.min(100,Math.round(v.x))),y:Math.max(0,Math.min(100,Math.round(v.y)))};}
  if(Array.isArray(raw.sessions))s.sessions=raw.sessions.filter(r=>r&&typeof r.id==='string'&&date.test(r.day)&&Number.isFinite(r.score)&&Number.isFinite(r.total)&&Number.isFinite(r.earned)).slice(-180).map(r=>({id:r.id.slice(0,40),day:r.day,earned:num(r.earned,1000),score:num(r.score,100),independent:num(r.independent,100),total:num(r.total,100),written:num(r.written,100),help:num(r.help,100),chars:Array.isArray(r.chars)?r.chars.filter(c=>valid.has(c)):[]}));
  if(raw.family&&typeof raw.family==='object')for(const [k,v] of Object.entries(raw.family)){if(date.test(k))s.family[k]=!!v;}
+ if(raw.letters&&typeof raw.letters==='object')for(const [k,v] of Object.entries(raw.letters)){if(date.test(k)&&v&&Array.isArray(v.chars)){const chars=v.chars.filter(c=>valid.has(c)).slice(0,8);if(chars.length)s.letters[k]={chars,read:v.read===true};}}
  if(raw.badges&&typeof raw.badges==='object')for(const [k,v] of Object.entries(raw.badges)){if(BADGES.some(b=>b.id===k)&&date.test(v))s.badges[k]=v;}
  if(raw.writing&&typeof raw.writing==='object')for(const [c,r] of Object.entries(raw.writing)){if(!valid.has(c)||!r||!date.test(r.lastDay))continue;const strokeErrors={};if(r.strokeErrors&&typeof r.strokeErrors==='object')for(const [k,v] of Object.entries(r.strokeErrors)){const i=Number(k);if(Number.isInteger(i)&&i>=0&&i<64)strokeErrors[i]=num(v,10000);}s.writing[c]={char:c,attempts:num(r.attempts,10000),traceDays:days(r.traceDays),blindDays:days(r.blindDays),strokeErrors,ms:num(r.ms,36e6),downshifts:num(r.downshifts,10000),pending:r.pending===true,lastDay:r.lastDay};}
  if(raw.life&&typeof raw.life==='object')for(const [k,v] of Object.entries(raw.life)){if(date.test(k)&&v&&/^[a-z]{2,12}$/.test(v.id)&&valid.has(v.char))s.life[k]={id:v.id,char:v.char};}

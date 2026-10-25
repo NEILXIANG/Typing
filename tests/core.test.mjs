@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {WORDS} from '../public/data.js';
-import {lookAlike,difficultyOf,awardBadges,BADGES} from '../public/core.js';
+import {lookAlike,difficultyOf,awardBadges,BADGES,themeOptions} from '../public/core.js';
 import {LIFE_QUESTS,lifeQuest} from '../public/life.js';
 import {recordWriting,writeModeFor,writeStageOf,placementPick,placementResult,recordDiagnosed,freshState,createPlan,recordRecognition,stageOf,addDays,completeSession,optionsFor,validateBackup,dueWords} from '../public/core.js';
 const day='2026-10-24';
@@ -32,3 +32,5 @@ test('sixty simulated days keep the review backlog bounded and move most charact
 test('name setting is kept, trimmed and defaulted',()=>{const raw=freshState();raw.settings.name='  小雨  ';assert.equal(validateBackup(raw,WORDS).settings.name,'小雨');raw.settings.name='';assert.equal(validateBackup(raw,WORDS).settings.name,'Cindy');raw.settings.name='x'.repeat(40);assert.equal(validateBackup(raw,WORDS).settings.name.length,12);});
 test('onboarding flag survives backup and is implied by a finished placement',()=>{const raw=freshState();assert.equal(validateBackup(raw,WORDS).onboarded,false);raw.onboarded=true;assert.equal(validateBackup(raw,WORDS).onboarded,true);const old=freshState();old.placement={complete:true};assert.equal(validateBackup(old,WORDS).onboarded,true);});
 test('badges are earned once, dated, and only known ids survive backup',()=>{const s=freshState();assert.deepEqual(awardBadges(s,day),[]);recordRecognition(s,'人',{clean:true,wasNew:true},day);assert.deepEqual(awardBadges(s,day).map(b=>b.id),['first']);assert.equal(s.badges.first,day);assert.deepEqual(awardBadges(s,day),[]);for(const w of WORDS.slice(1,10))recordRecognition(s,w.char,{clean:true,wasNew:true},day);assert.deepEqual(awardBadges(s,day).map(b=>b.id),['ten']);recordWriting(s,'人',{level:'blind',completed:true},day);assert.deepEqual(awardBadges(s,day).map(b=>b.id),['blind']);const raw=freshState();raw.badges={first:day,nope:day,ten:'bad'};assert.deepEqual(validateBackup(raw,WORDS).badges,{first:day});assert.equal(BADGES.length,5);});
+test('she can pick between two islands; her pick decides today\'s new characters and survives backup',()=>{const s=freshState();const opts=themeOptions(s,WORDS,day);assert.equal(opts.length,2);assert.notEqual(opts[0],opts[1]);s.days[day]={newChars:[],reviewChars:[],written:[],points:0,unit:opts[1]};const p=createPlan(s,WORDS,day);assert(p.newChars.every(c=>WORDS.find(w=>w.char===c).unit===opts[1]),p.newChars.join());assert.equal(validateBackup(s,WORDS).days[day].unit,opts[1]);});
+test('letters keep only known characters and dates',()=>{const raw=freshState();raw.letters={[day]:{chars:['人','x','口'],read:true},bad:{chars:['人']},'2026-10-23':{chars:[]}};assert.deepEqual(validateBackup(raw,WORDS).letters,{[day]:{chars:['人','口'],read:true}});});

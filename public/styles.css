@@ -233,3 +233,46 @@ main{min-height:calc(100dvh - 120px)}
 .today .today-art{width:100%}
 .buddy{width:44px;height:58px;object-fit:contain}
 .write-top .buddy{width:36px;height:48px}
+/* ---- Island sky, sign, island choice, letters ---- */
+.sky{position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:inherit;z-index:1}
+.sky.night{background:linear-gradient(180deg,#2b3a6b99,#4a5a8f55 55%,transparent 80%)}
+.sky .moon{position:absolute;right:16%;top:10%;width:9%;aspect-ratio:1;border-radius:50%;box-shadow:inset -.6em -.2em 0 0 #fff3c4;transform:rotate(-20deg)}
+.sky .star{position:absolute;width:5px;height:5px;border-radius:50%;background:#fff6cf;animation:twinkle 2.4s ease-in-out 4 both}
+@keyframes twinkle{50%{opacity:.25}}
+.sky .p{position:absolute;top:-8%;display:block;animation:drift linear 2 both}
+.sky.rain .p{width:2px;height:14px;background:#9fbde0;border-radius:2px;animation-name:rainfall;animation-iteration-count:6}
+.sky.snow .p{width:8px;height:8px;border-radius:50%;background:#fff;box-shadow:0 0 2px #c9d6e8}
+.sky.leaves .p{width:10px;height:7px;border-radius:70% 0;background:#e8a65a}
+.sky.petals .p{width:9px;height:7px;border-radius:60% 40%;background:#f6b8c8}
+@keyframes drift{to{transform:translate(18px,110cqh) rotate(320deg);opacity:.2}}
+@keyframes rainfall{to{transform:translateY(110cqh);opacity:.3}}
+.today-art,.hero-island,.garden{container-type:size}
+.today-art{aspect-ratio:540/360}
+.sign{position:absolute;left:7%;top:44%;z-index:2;display:flex;flex-direction:column;align-items:center;background:#e9c58c;border:2px solid #c99b5b;border-radius:8px;padding:4px 10px 6px;box-shadow:0 3px 0 #b5844a}
+.sign:after{content:'';position:absolute;bottom:-26px;left:50%;width:5px;height:24px;background:#b5844a;transform:translateX(-50%);z-index:-1}
+.sign small{font-size:.65rem;color:#7a5326;line-height:1.2}
+.sign span{font-family:"Island Kai","Kaiti SC",KaiTi,STKaiti,serif;font-size:1.5rem;color:#5a3a16;letter-spacing:2px;line-height:1.2}
+.hero-island .sign span{font-size:1.1rem}
+.decoration,.decoration.plant{z-index:2}
+.today-ask{font-size:1.15rem;font-weight:650;margin:16px 0 8px}
+.island-pick{display:flex;gap:12px;justify-content:center;margin-bottom:6px;width:100%}
+.pick{flex:1;max-width:240px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 10px;border:2px solid var(--line);border-radius:20px;background:#fff;transition:transform .1s,border-color .15s}
+.pick .emoji{width:40px;height:40px}.pick b{font-size:1.05rem}.pick small{font-size:.8rem;color:var(--muted);line-height:1.4}
+.pick.on{border-color:var(--blue);background:#f0f4ff;box-shadow:0 6px 16px #4f6fe022}
+.pick:active{transform:scale(.97)}
+.letter-card{display:flex;align-items:center;gap:14px;width:100%;max-width:560px;margin:18px auto 0;text-align:left;padding:16px 20px}
+.letter-card .ico{width:30px;height:30px;color:#c08a12}
+.letter-card span{display:flex;flex-direction:column}.letter-card b{font-size:1.1rem}.letter-card small{color:var(--muted)}
+.letter-card.new{border-color:#f0d98a;background:#fffbea;animation:pop .5s ease-out}
+.letter-hint{color:#8a5f0a;margin:0 0 14px;display:flex;align-items:center;justify-content:center;gap:6px}
+.letter{background:linear-gradient(#fffdf6,#fff8e8);border-radius:16px;padding:18px 20px;font-size:1.2rem;line-height:1.9}
+.letter-head{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:.9rem;margin-bottom:8px}
+.letter p{margin:4px 0}.letter .to{font-weight:650}.letter .from{text-align:right;color:var(--muted)}
+.mailbox{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;margin-bottom:8px}
+.mail{display:flex;flex-direction:column;align-items:center;gap:2px;padding:14px 6px;border:1px solid var(--line);border-radius:14px;background:#fffdf6;position:relative}
+.mail b{font-family:"Island Kai","Kaiti SC",KaiTi,STKaiti,serif;font-size:1.4rem;font-weight:400}.mail small{color:var(--muted)}
+.mail.new:after{content:'';position:absolute;top:8px;right:8px;width:9px;height:9px;border-radius:50%;background:var(--coral)}
+.decoration.visitor{font-size:34px;pointer-events:none;animation:bob 5s ease-in-out 2}
+.garden .decoration.visitor{font-size:40px}
+.visitor-line{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;color:#2f7d4c;font-weight:650;margin:4px 0 10px}
+.visitor-line .emoji{width:32px;height:32px}
