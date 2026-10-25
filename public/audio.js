@@ -8,10 +8,12 @@ export function setVolume(v){volume=v;if(master)master.gain.setTargetAtTime(enab
 export function musicOn(){return enabled;}
 // Recorded clips are played first so a tablet without a Chinese speech pack still hears every word;
 // the system voice is only used for text that changes (names, letters, stories) or if a clip fails.
-let clips=new Map(),clip=null;
+let clips=new Map(),clip=null,clipFailures=0;
 export function setClips(map){clips=map;}
-function playClip(url,text,onUnavailable,opts){stopSpeech();clip=new Audio(url);speaking=true;setVolume(volume);const done=()=>{speaking=false;setVolume(volume);};clip.onended=done;clip.onerror=()=>{done();clip=null;tts(text,onUnavailable,opts);};clip.play().catch(err=>{done();if(err?.name!=='NotAllowedError')tts(text,onUnavailable,opts);});}
-export function speak(text,onUnavailable=()=>{},opts={}){const url=!opts.pitch&&clips.get(text);if(url){playClip(url,text,onUnavailable,opts);return;}tts(text,onUnavailable,opts);}
+export function clipTrouble(){return clipFailures>0;}
+// Only a real load failure falls back to the system voice; an interrupted clip (another tap, leaving the page) just stops.
+function playClip(url,text,onUnavailable,opts){stopSpeech();const a=new Audio(url);clip=a;speaking=true;setVolume(volume);const done=()=>{if(clip===a){clip=null;speaking=false;setVolume(volume);}};const fail=()=>{if(clip!==a)return;done();clipFailures++;tts(text,onUnavailable,opts);};a.onended=done;a.onerror=fail;a.play().catch(err=>{if(err?.name==='NotSupportedError')fail();else done();});}
+export function speak(text,onUnavailable=()=>{},opts={}){const url=clips.get(text);if(url){playClip(url,text,onUnavailable,opts);return;}tts(text,onUnavailable,opts);}
 function tts(text,onUnavailable=()=>{},opts={}){
  if(!('speechSynthesis'in window)){onUnavailable();return;}
  window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='zh-CN';u.rate=opts.rate||.78;u.pitch=opts.pitch||1;const voices=window.speechSynthesis.getVoices();const voice=voices.find(v=>v.voiceURI===preferredVoice)||voices.find(v=>/^zh[-_]CN/i.test(v.lang))||voices.find(v=>/^zh/i.test(v.lang));if(voice)u.voice=voice;

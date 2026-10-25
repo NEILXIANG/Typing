@@ -2,7 +2,7 @@
 // Needs macOS `say` with the Tingting voice and ffmpeg. Existing clips are kept; run again after adding words.
 // `say` is slow to start, so texts are spoken in batches separated by long pauses and cut apart at the pauses;
 // a batch whose pause count does not match falls back to one call per text.
-import {WORDS} from '../public/data.js';
+import {WORDS,STORIES} from '../public/data.js';
 import {mkdir,access} from 'node:fs/promises';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
@@ -24,4 +24,7 @@ async function batch(jobs,tag){const aiff=path.join(tmpdir(),`island-b${tag}.aif
 const groups=[];for(let i=0;i<todo.length;i+=25)groups.push(todo.slice(i,i+25));
 let next=0,done=0,fallbacks=0;
 await Promise.all(Array.from({length:3},async(_,w)=>{while(next<groups.length){const g=groups[next++];if((await batch(g,w))==='fallback')fallbacks++;done+=g.length;console.log(`${done}/${todo.length}`);}}));
+// Fixed texts: greetings (the rabbit's one pitched up), the parent's voice test and the stories, all with the default name.
+const fixed=[['x-hello-bunny','你好，Cindy。我是小兔，欢迎来到汉字小岛。',true],['x-hello','你好，Cindy。欢迎来到汉字小岛。'],['x-test','你好，Cindy。今天阳光明媚，我们一起读书，慢慢写字。'],...STORIES.map((st,i)=>[`x-story-${i}`,st.text])];
+for(const [name,text,bunny] of fixed){const file=path.join(out,name+'.mp3');try{await access(file);continue;}catch{}const aiff=path.join(tmpdir(),'island-x.aiff');await exec('say',['-v','Tingting','-r',bunny?'140':'150','-o',aiff,text]);await exec('ffmpeg',['-hide_banner','-loglevel','error','-y','-i',aiff,...(bunny?['-af','asetrate=22050*1.22,aresample=22050,atempo=0.92']:[]),'-ac','1','-ar','22050','-b:a','32k',file]);}
 console.log(`Prepared ${todo.length} new clips (${fallbacks} batches fell back to single calls); ${all.length} total.`);
