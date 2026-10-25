@@ -116,3 +116,31 @@ main{min-height:calc(100dvh - 120px)}
 .learn-more{animation:fade-in .25s ease-out}
 .words-line{min-height:48px}
 .hint-inline{font-size:1.25rem;font-weight:500}.hint-inline b{font-family:"Island Kai","Kaiti SC",KaiTi,STKaiti,serif;font-size:1.6rem;font-weight:400;margin:0 2px}
+/* ---- Audit pass: spacing and hierarchy ---- */
+.study-card.compact{min-height:0}
+.visual-purpose{display:none}
+.write-actions .help{display:none;visibility:visible}
+.write-actions.show-help .help{display:inline-flex}
+.today .greet{font-size:1.5rem;color:var(--ink);font-weight:600}
+.today-theme{font-size:1.1rem;margin-top:16px}
+.today-theme .emoji{width:26px;height:26px}
+.today-summary{font-size:1.65rem;margin:8px 0 26px}
+@media(min-width:700px) and (orientation:portrait){.today{min-height:calc(100dvh - 260px);display:flex;flex-direction:column;justify-content:center;margin-top:0}.today-art{max-width:480px}}
+.completion .done-lines p{font-size:1.25rem}
+.leaderboard{font-size:1rem}
+/* ---- Icon consistency + purposeful motion ---- */
+.emoji{filter:saturate(.82)}
+.text-button .ico,.word-tag .ico{width:18px;height:18px}
+.mark .ico{width:26px;height:26px;stroke-width:2.4}
+.task-card .arrow .ico{width:18px;height:18px}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.today-art .decoration,.hero-island .decoration{animation:bob 4s ease-in-out infinite}
+.today-art .decoration:nth-child(odd){animation-duration:5s;animation-delay:-2s}
+@keyframes tile-pop{0%{transform:scale(1)}40%{transform:scale(1.05)}100%{transform:scale(1)}}
+.choice.correct{animation:tile-pop .35s ease-out}
+@keyframes dot-pop{0%{transform:scale(1)}50%{transform:scale(1.6)}100%{transform:scale(1)}}
+.stroke-dots i.done{animation:dot-pop .3s ease-out}
+@keyframes grow-in{0%{transform:scale(.85);opacity:0}100%{transform:scale(1);opacity:1}}
+.hero-island{animation:grow-in .5s ease-out}
+.garden .decoration.new{animation:pop .5s ease-out}
+.today{align-items:center}.today .button.big{width:auto}
