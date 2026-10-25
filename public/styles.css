@@ -204,3 +204,30 @@ main{min-height:calc(100dvh - 120px)}
 .welcome-art img{animation:grow-in .6s ease-out both}
 .three>div{animation:fade-in .35s ease-out both}.three>div:nth-child(2){animation-delay:.08s}.three>div:nth-child(3){animation-delay:.16s}
 .motion-float,.motion-sway,.motion-run,.motion-rain,.motion-glow,.motion-grow{animation-iteration-count:2}
+/* ---- Living island, companion, step colours ---- */
+.decoration{font-size:44px}
+.garden .decoration{font-size:48px}
+.hero-island .decoration{font-size:34px}
+.decoration.plant{pointer-events:none;font-size:34px}
+.garden .decoration.plant{font-size:40px}
+.decoration.plant .emoji{filter:saturate(.9)}
+.grow-note{text-align:center;margin:-12px 0 18px}
+@media(min-width:700px){.today-art{max-width:560px}}
+@media(orientation:landscape) and (max-height:840px){.today-art{max-width:min(520px,44vh)}}
+.buddy{width:40px;height:40px;margin-right:10px;flex-shrink:0;transform-origin:50% 100%}
+.buddy.happy{animation:hop .5s ease-out}
+.buddy.think{animation:tilt .6s ease-in-out}
+@keyframes hop{0%,100%{transform:translateY(0)}35%{transform:translateY(-12px) scale(1.05)}65%{transform:translateY(0) scale(.97,1.03)}}
+@keyframes tilt{0%,100%{transform:rotate(0)}40%{transform:rotate(-12deg)}75%{transform:rotate(6deg)}}
+.feedback:not(.success):not(.hint) .buddy{opacity:.75}
+.write-top{display:flex;align-items:center;justify-content:center;gap:4px;min-height:44px}
+.write-top .buddy{width:34px;height:34px}
+.write-top .stroke-dots{margin:0}
+.study-card{border-top:6px solid #c9d6fb}
+.study-card.stage-learn,.study-card.stage-quiz{border-top-color:#c9d6fb}
+.study-card.stage-write{border-top-color:#bfe3c9}
+.study-card.stage-transfer{border-top-color:#f6dd9a}
+.stage-pill.stage-learn,.stage-pill.stage-quiz{background:#e9efff;border-color:#d6e0fd;color:#3d5ad0}
+.stage-pill.stage-write{background:#eaf6ee;border-color:#cfe9d7;color:#2f7d4c}
+.stage-pill.stage-transfer{background:#fff4d6;border-color:#f3e0a6;color:#8a5f0a}
+.today .today-art{width:100%}
