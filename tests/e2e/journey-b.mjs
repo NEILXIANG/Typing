@@ -1,4 +1,4 @@
-// 终验 B 段：字库搜索 / 连续天数 / 故事页 / 游戏页 / 装饰生长 / 离线包 / 零 JS 错误
+// 终验 B 段：字库搜索 / 本周天数 / 故事页 / 游戏页 / 装饰生长 / 离线包 / 零 JS 错误
 import { newPage } from './cdp.mjs';
 import fs from 'node:fs/promises';
 import {mkdirSync} from 'node:fs';
@@ -31,16 +31,16 @@ await p.eval(`(()=>{const i=document.querySelector('#book-search');i.value='zzz'
 await p.sleep(700);
 console.log('BOOK_EMPTY', await p.eval(`!!document.querySelector('.empty')`));
 
-// ---- 2. 注入历史数据：验证连续天数 + 装饰生长 ----
+// ---- 2. 注入历史数据：验证本周天数 + 装饰生长 ----
 await p.eval(`(()=>{const K='cindy-island-v1';const s=JSON.parse(localStorage.getItem(K)||'{}');s.version=1;s.settings={target:3,writeTarget:1,level:'auto',musicVolume:.12,name:'Cindy'};s.onboarded=true;s.placement={complete:true,day:'2026-10-23'};s.placementNote='';s.tier=1;s.records={};s.days={};s.sessions=[];s.stars=40;s.owned=['flower','bird'];s.decor=['flower','bird'];s.badges={};s.letters={};s.active=null;s.confusions=[];s.family={};s.writing={};s.life={};s.decorPos={};
-// 连续 2 天：前两天有学习，今天还没开始
+// 本周 2 天：前两天有学习，今天还没开始
 s.days['2026-10-23']={newChars:['人'],reviewChars:[],written:[],points:3};
 s.days['2026-10-24']={newChars:['口'],reviewChars:[],written:[],points:3};
 localStorage.setItem(K,JSON.stringify(s));return 1;})()`);
 await p.eval('location.hash="#home"'); await p.eval('location.reload()'); await p.sleep(2400);
 const streak = await p.eval(`(()=>{const s=document.querySelector('.streak');return {has:!!s, text:s?s.textContent.trim():'', route:location.hash};})()`);
 console.log('STREAK', JSON.stringify(streak));
-await snap('10-home-streak', '(首页 · 连续天数)');
+await snap('10-home-streak', '(首页 · 本周天数)');
 
 // ---- 3. 装饰生长动画类名 ----
 await p.eval(`location.hash='#garden'`); await p.sleep(1200);

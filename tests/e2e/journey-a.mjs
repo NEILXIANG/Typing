@@ -18,17 +18,14 @@ const snap = async (n, note) => {
   console.log(`== ${n} ${note} ==\n` + (await p.text()).slice(0, 300).replace(/\n/g, ' | '));
 };
 
-// ---- 1. 欢迎页：验证"稍后再看"按钮存在且可点 ----
-const welcome = await p.eval(`(()=>{const s=document.querySelector('.skip-later');return {hasSkip:!!s, label:s?s.textContent.trim():'', hasStart:!!document.querySelector('[data-act="welcomeNext"]')};})()`);
+// ---- 1. 欢迎页：只有一屏和一个"出发"按钮 ----
+const welcome = await p.eval(`(()=>({hasStart:!!document.querySelector('[data-act="welcomeDone"]'), buttons:document.querySelectorAll('main button').length}))()`);
 console.log('WELCOME', JSON.stringify(welcome));
 await snap('01-welcome', '(欢迎页)');
 
 // ---- 2. 走完引导 + 摸底 ----
-for (let i = 0; i < 4; i++) {
-  const ok = await p.eval(`(()=>{const b=document.querySelector('[data-act="welcomeNext"],[data-act="welcomeDone"]');if(!b)return false;b.click();return true;})()`);
-  await p.sleep(900);
-  if (!ok) break;
-}
+await p.eval(`document.querySelector('[data-act="welcomeDone"]')?.click()`);
+await p.sleep(3200);
 for (let i = 0; i < 20; i++) {
   const done = await p.eval(`!document.querySelector('[data-act="placementAnswer"]')`);
   if (done) break;
@@ -37,13 +34,12 @@ for (let i = 0; i < 20; i++) {
   await p.sleep(1200);
 }
 await p.clickText('好的', 900);
-await p.clickText('知道啦', 900);
 await p.clickText('好的', 900);
 
-// ---- 3. 首页：验证连续天数小火苗 ----
+// ---- 3. 首页：本周来了几天（不是连续打卡） ----
 const home = await p.eval(`(()=>{const s=document.querySelector('.streak');return {hasStreak:!!s, text:s?s.textContent.trim():'', stars:JSON.parse(localStorage.getItem('cindy-island-v1')||'{}').stars};})()`);
 console.log('HOME', JSON.stringify(home));
-await snap('02-home', '(首页 · 连续天数)');
+await snap('02-home', '(首页 · 本周天数)');
 
 // ---- 4. 开始学习，完整走一遍 ----
 await p.eval(`document.querySelector('[data-act="start"]')?.click()`);

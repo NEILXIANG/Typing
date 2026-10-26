@@ -3,34 +3,40 @@ export const STORAGE_KEY='cindy-island-v1';
 export const INTERVALS=[1,3,7,14,30,60,90];
 export function today(date=new Date()){return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;}
 export function addDays(day,n){const d=new Date(day+'T12:00:00');d.setDate(d.getDate()+n);return today(d);}
-export function freshState(){return {version:1,settings:{target:3,writeTarget:1,level:'auto',musicVolume:.12,name:'Cindy'},placement:null,onboarded:false,badges:{},letters:{},tier:1,records:{},days:{},sessions:[],stars:0,owned:[],decor:[],active:null,confusions:[],family:{},writing:{},life:{},decorPos:{}};}
+export function freshState(){return {version:1,settings:{target:3,writeTarget:1,level:'auto',musicVolume:.12,name:'Cindy',dayLength:TASK_CAP},placement:null,onboarded:false,badges:{},letters:{},tier:1,records:{},days:{},sessions:[],stars:0,owned:[],decor:[],active:null,confusions:[],family:{},writing:{},life:{},decorPos:{}};}
 export function getDay(state,day=today()){return state.days[day]||{newChars:[],reviewChars:[],written:[],points:0};}
 export function dueWords(state,words,day=today()){return words.filter(w=>state.records[w.char]?.due<=day&&state.records[w.char]?.lastDay!==day).sort((a,b)=>{const ra=state.records[a.char],rb=state.records[b.char];return ra.strength-rb.strength||ra.due.localeCompare(rb.due)||rb.mistakes-ra.mistakes;});}
 export const REVIEW_CAP=5,REVIEW_CAP_HIGH=7,QUICK_CAP=5,BACKLOG=8;
 export function isSecure(r){return !!r&&r.strength>=3&&r.cleanDays.length>=3;}
 export function tierFor(state){return state.settings.level==='g1'?Math.min(state.tier,2):state.settings.level==='g2'?3:state.tier;}
-export function createPlan(state,words,day=today()){
- // When many weak characters are due, consolidation comes first: one fewer new character (two fewer when the backlog doubles, never below 1) and two more review slots.
- const d=getDay(state,day),dueAll=dueWords(state,words,day),weakDue=dueAll.filter(w=>!isSecure(state.records[w.char])).length,pressure=weakDue>BACKLOG,heavy=weakDue>BACKLOG*2,target=d.target??state.settings.target,count=Math.max(0,(heavy?Math.max(1,target-2):pressure?Math.max(2,target-1):target)-d.newChars.length), tier=tierFor(state);
+// A day stays within TASK_CAP steps (new character 3, sprout review 2 or 3 if re-taught, growing/secure review 1, each writing 1, the matching round 1).
+// Due reviews are placed first in priority order; new characters take what is left, never fewer than one and never more than the parent's target.
+// One new character costs about ten steps over its life (3 to learn, about 7 across later reviews), so 20 steps sustain roughly two new characters a day.
+export const TASK_CAP=20;
+export function createPlan(state,words,day=today(),{cap=state.settings.dayLength||TASK_CAP,minNew=1}={}){
+ const d=getDay(state,day),dueAll=dueWords(state,words,day),target=d.target??state.settings.target,want=Math.max(0,target-d.newChars.length),tier=tierFor(state);
+ // Only a sprout (fewer than two clean days) needs both questions; a growing or secure character is checked with the single word-transfer question.
+ const light=r=>isSecure(r)||(r.strength>=2&&r.cleanDays.length>=2);
+ const weak=dueAll.filter(w=>!light(state.records[w.char])),secure=dueAll.filter(w=>light(state.records[w.char])).sort((a,b)=>state.records[a.char].strength-state.records[b.char].strength||state.records[a.char].due.localeCompare(state.records[b.char].due));
+ const pressure=weak.length>BACKLOG;
+ const writingLeft=Math.max(0,(d.writeTarget??state.settings.writeTarget)-d.written.length);
+ const reserve=Math.min(want,minNew)*3;
+ let budget=cap-1-writingLeft-reserve;const reviews=[];
+ for(const w of weak.slice(0,pressure?REVIEW_CAP_HIGH:REVIEW_CAP)){const cost=state.records[w.char].strength===0?3:2;if(budget<cost)break;budget-=cost;reviews.push(w);}
+ for(const w of secure.slice(0,8)){if(budget<1)break;budget-=1;reviews.push(w);}
+ const count=Math.min(want,Math.min(want,minNew)+Math.max(0,Math.floor(budget/3)));
  // The child may pick today's island; within the same difficulty band her pick comes first, easier characters first inside it.
  const pref=Number.isInteger(d.unit)?d.unit:null,available=candidates(state,words).sort((a,b)=>Math.abs(a.tier-tier)-Math.abs(b.tier-tier)||(pref!==null&&(a.unit!==pref)-(b.unit!==pref))||a.unit-b.unit||difficultyOf(a)-difficultyOf(b));
  // Look-alike characters interfere with each other when met on the same day; keep them apart.
  const fresh=[];for(const w of available){if(fresh.length>=count)break;if(fresh.some(f=>lookAlike(f.char,w.char)))continue;fresh.push(w);}
  // Strong readers still check one earlier, untested foundation character each day.
  if(state.settings.level==='auto'&&tier===3&&fresh.length>1){const foundation=available.find(w=>w.grade===1&&!fresh.includes(w));if(foundation)fresh[fresh.length-1]=foundation;}
- // Weak characters take the full two-question slots; securely held ones get separate one-question slots so they are still checked.
- const weak=dueAll.filter(w=>!isSecure(state.records[w.char])),secure=dueAll.filter(w=>isSecure(state.records[w.char])).sort((a,b)=>state.records[a.char].due.localeCompare(state.records[b.char].due));
- // Review slots follow the agreed rhythm: five a day, seven when a backlog builds. Securely held characters get a cheap one-question slot and may stretch a little further.
- const weakCap=pressure?REVIEW_CAP_HIGH:REVIEW_CAP,quickCap=Math.min(8,QUICK_CAP+Math.floor(secure.length/3));
- const reviews=[...weak.slice(0,weakCap),...secure.slice(0,quickCap)];
- const writingLeft=Math.max(0,(d.writeTarget??state.settings.writeTarget)-d.written.length);
  // Writing runs on its own track: characters left unfinished on an earlier day come back first.
  const writeChars=Object.values(state.writing||{}).filter(r=>r.pending&&r.lastDay!==day&&state.records[r.char]).sort((a,b)=>a.lastDay.localeCompare(b.lastDay)).slice(0,writingLeft).map(r=>r.char);
  // Writing is easier on a character she has already recognised on an earlier day, so those come before today's new ones.
  const byEase=(a,b)=>difficultyOf(a)-difficultyOf(b),known=reviews.filter(w=>state.records[w.char].cleanDays.length>0).sort(byEase),rest=reviews.filter(w=>!known.includes(w)).sort(byEase);
  for(const w of [...known,...fresh,...rest]){if(writeChars.length>=writingLeft)break;if(!writeChars.includes(w.char))writeChars.push(w.char);}
- // A character already held securely is checked with the single word-transfer question only.
- return {day,newChars:fresh.map(w=>w.char),reviewChars:reviews.map(w=>w.char),writeChars,quickReview:reviews.filter(w=>isSecure(state.records[w.char])).map(w=>w.char),pressure};
+ return {day,newChars:fresh.map(w=>w.char),reviewChars:reviews.map(w=>w.char),writeChars,quickReview:reviews.filter(w=>light(state.records[w.char])).map(w=>w.char),pressure};
 }
 function candidates(state,words){let available=words.filter(w=>!state.records[w.char]);if(state.settings.level==='g1')available=available.filter(w=>w.grade===1);if(state.settings.level==='g2')available=available.filter(w=>w.grade===2);return available;}
 // Two islands she can choose between today: the default next one, and the next other island at the same distance from her level.
@@ -131,7 +137,7 @@ export function optionsFor(w,words,random=Math.random){const candidates=[...(SIM
 export function validateBackup(raw,words){
  if(!raw||raw.version!==1||typeof raw.records!=='object'||Array.isArray(raw.records)||!raw.settings)throw Error('这不是有效的小岛进度文件。');
  const valid=new Set(words.map(w=>w.char));const s=freshState();
- s.settings.target=[2,3,4,5].includes(raw.settings.target)?raw.settings.target:3;s.settings.writeTarget=[1,2].includes(raw.settings.writeTarget)?raw.settings.writeTarget:1;s.settings.level=['auto','g1','g2'].includes(raw.settings.level)?raw.settings.level:'auto';s.settings.name=typeof raw.settings.name==='string'&&raw.settings.name.trim()?raw.settings.name.trim().slice(0,12):'Cindy';
+ s.settings.target=[2,3,4,5].includes(raw.settings.target)?raw.settings.target:3;s.settings.writeTarget=[1,2].includes(raw.settings.writeTarget)?raw.settings.writeTarget:1;s.settings.level=['auto','g1','g2'].includes(raw.settings.level)?raw.settings.level:'auto';s.settings.dayLength=[16,20,24].includes(raw.settings.dayLength)?raw.settings.dayLength:TASK_CAP;s.settings.name=typeof raw.settings.name==='string'&&raw.settings.name.trim()?raw.settings.name.trim().slice(0,12):'Cindy';
  s.placement=raw.placement&&typeof raw.placement==='object'?{complete:true}:null;s.onboarded=raw.onboarded===true||!!s.placement;s.tier=[1,2,3].includes(raw.tier)?raw.tier:1;
  const date=/^\d{4}-\d{2}-\d{2}$/,num=(v,max)=>Math.max(0,Math.min(max,Math.round(Number(v)||0))),days=a=>Array.isArray(a)?[...new Set(a.filter(x=>date.test(x)))].slice(-180):[];
  for(const [c,r] of Object.entries(raw.records)){if(!valid.has(c)||!r||!date.test(r.due)||!date.test(r.lastDay))continue;s.records[c]={char:c,firstDay:date.test(r.firstDay)?r.firstDay:r.lastDay,lastDay:r.lastDay,due:r.due,cleanDays:Array.isArray(r.cleanDays)?[...new Set(r.cleanDays.filter(x=>date.test(x)))].slice(-180):[],strength:Math.max(0,Math.min(INTERVALS.length,Number(r.strength)||0)),writeCount:Math.max(0,Math.min(10000,Number(r.writeCount)||0)),mistakes:Math.max(0,Math.min(10000,Number(r.mistakes)||0)),...(r.diagnosed===true?{diagnosed:true}:{}),...(date.test(r.secureDay)?{secureDay:r.secureDay}:{})};}
