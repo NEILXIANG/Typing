@@ -1,1 +1,17 @@
-{"name":"cindy-hanzi-island","version":"1.0.0","private":true,"type":"module","scripts":{"dev":"node scripts/serve.mjs","start":"node scripts/serve.mjs","test":"node --test tests/*.test.mjs","check":"node scripts/check.mjs","build":"npm run check && node scripts/build.mjs"},"engines":{"node":">=18"}}
+{
+  "name": "cindy-hanzi-island",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/serve.mjs",
+    "start": "node scripts/serve.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "check": "node scripts/check.mjs",
+    "build": "npm run check && node scripts/build.mjs",
+    "e2e": "node tests/e2e/journey-a.mjs && node tests/e2e/journey-b.mjs && node tests/e2e/mobile.mjs && node tests/e2e/island-magic.mjs && node tests/e2e/island-drag.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

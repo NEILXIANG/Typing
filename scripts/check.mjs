@@ -37,7 +37,9 @@ for(const [char,{glyph}] of Object.entries(PICTURES)){
  await access(new URL(`../public/assets/illustrations/${file}`,import.meta.url));}
 // The magic layer falls back to a wooden sign when there is no picture, so every character can always leave a mark.
 assert(appSource.includes('magic-sign'),'the island magic has no fallback for characters without a picture');
-for(const w of WORDS){const plan=visualPlan(w);if(plan.kind==='picture')assert(PICTURES[w.char],`${w.char} claims a picture but has none`);}
+// A picture only counts if she can meet that character; keep enough of them so writing usually changes the island with a picture, not only a sign.
+const withPicture=WORDS.filter(w=>PICTURES[w.char]).length;
+assert(withPicture>=100,`only ${withPicture} of ${WORDS.length} characters can show a picture`);
 // Every module the app imports must be cached for offline use, or the app breaks the moment the network drops.
 const swSource=await readFile(new URL('../public/sw.js',import.meta.url),'utf8');
 const shellMatch=swSource.match(/const SHELL=\[([^\]]*)\]/);

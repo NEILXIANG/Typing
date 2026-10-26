@@ -1000,7 +1000,7 @@ function completeSession(state,session,day=today()){
 function settlePartial(state,session,day=today()){
  if(!session)return null;
  const plan=session.plan||{},results=session.results||{};
- state.days[day]??={newChars:[],reviewChars:[],written:[],points:0};
+ // The day record is created by recordRecognition, so a break before anything was answered leaves no trace at all.
  let earned=0;const used=[];
  for(const char of [...(plan.reviewChars||[]),...(plan.newChars||[])]){
   const p=results[char];if(!p?.recognized||!p?.transfer)continue;

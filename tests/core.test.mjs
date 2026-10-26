@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {WORDS} from '../public/data.js';
 import {lookAlike,difficultyOf,awardBadges,BADGES,themeOptions} from '../public/core.js';
 import {LIFE_QUESTS,lifeQuest} from '../public/life.js';
-import {recordWriting,writeModeFor,writeStageOf,placementPick,placementResult,recordDiagnosed,freshState,createPlan,recordRecognition,stageOf,addDays,completeSession,optionsFor,validateBackup,dueWords} from '../public/core.js';
+import {recordWriting,writeModeFor,writeStageOf,placementPick,placementResult,recordDiagnosed,freshState,createPlan,recordRecognition,stageOf,addDays,completeSession,settlePartial,optionsFor,validateBackup,dueWords} from '../public/core.js';
 const day='2026-10-24';
 test('new daily work is bounded and recognition/writing goals are separate',()=>{const s=freshState(),p=createPlan(s,WORDS,day);assert.equal(p.newChars.length,3);assert.equal(p.writeChars.length,1);assert.equal(p.reviewChars.length,0);s.settings.target=5;s.settings.writeTarget=2;assert.equal(createPlan(s,WORDS,day).newChars.length,5);assert.equal(createPlan(s,WORDS,day).writeChars.length,2);});
 test('a day started at three words keeps its goal when parent changes tomorrow settings',()=>{const s=freshState();s.days[day]={newChars:['人','口','手'],reviewChars:[],written:['人'],points:9,target:3,writeTarget:1};s.settings.target=5;s.settings.writeTarget=2;assert.equal(createPlan(s,WORDS,day).newChars.length,0);assert.equal(createPlan(s,WORDS,day).writeChars.length,0);assert.equal(createPlan(s,WORDS,addDays(day,1)).newChars.length,5);const saved=validateBackup(s,WORDS);assert.equal(saved.days[day].target,3);assert.equal(saved.days[day].writeTarget,1);});
@@ -34,3 +34,31 @@ test('onboarding flag survives backup and is implied by a finished placement',()
 test('badges are earned once, dated, and only known ids survive backup',()=>{const s=freshState();assert.deepEqual(awardBadges(s,day),[]);recordRecognition(s,'人',{clean:true,wasNew:true},day);assert.deepEqual(awardBadges(s,day).map(b=>b.id),['first']);assert.equal(s.badges.first,day);assert.deepEqual(awardBadges(s,day),[]);for(const w of WORDS.slice(1,10))recordRecognition(s,w.char,{clean:true,wasNew:true},day);assert.deepEqual(awardBadges(s,day).map(b=>b.id),['ten']);recordWriting(s,'人',{level:'blind',completed:true},day);assert.deepEqual(awardBadges(s,day).map(b=>b.id),['blind']);const raw=freshState();raw.badges={first:day,nope:day,ten:'bad'};assert.deepEqual(validateBackup(raw,WORDS).badges,{first:day});assert.equal(BADGES.length,5);});
 test('she can pick between two islands; her pick decides today\'s new characters and survives backup',()=>{const s=freshState();const opts=themeOptions(s,WORDS,day);assert.equal(opts.length,2);assert.notEqual(opts[0],opts[1]);s.days[day]={newChars:[],reviewChars:[],written:[],points:0,unit:opts[1]};const p=createPlan(s,WORDS,day);assert(p.newChars.every(c=>WORDS.find(w=>w.char===c).unit===opts[1]),p.newChars.join());assert.equal(validateBackup(s,WORDS).days[day].unit,opts[1]);});
 test('letters keep only known characters and dates',()=>{const raw=freshState();raw.letters={[day]:{chars:['人','x','口'],read:true},bad:{chars:['人']},'2026-10-23':{chars:[]}};assert.deepEqual(validateBackup(raw,WORDS).letters,{[day]:{chars:['人','口'],read:true}});});
+test('leaving mid-session keeps the answers she already got right, and never pays twice',()=>{
+ const s=freshState();
+ const session={id:'break',plan:{newChars:['人','口','手'],reviewChars:[],writeChars:['人']},
+  results:{人:{recognized:true,transfer:true,written:true,mistakes:0,hinted:false},
+           口:{recognized:true,transfer:true,written:false,mistakes:1,hinted:true},
+           手:{recognized:true,transfer:false,written:false,mistakes:0,hinted:false}}};
+ const part=settlePartial(s,session,day);
+ assert.equal(part.earned,6,'a clean answer earns 3 plus 2 for writing it, a hinted one earns 1');
+ assert.deepEqual(part.chars,['人','口'],'only a character she recognised AND used in a transfer is settled');
+ assert.equal(s.stars,6);
+ assert.equal(s.days[day].written.includes('人'),true,'writing before the break still counts');
+ assert.equal(s.records.手,undefined,'a character that failed the transfer earns nothing');
+ assert.equal(session.partialSettled,true);
+ // She comes back and finishes the session: nothing is paid a second time.
+ const r=completeSession(s,session,day);
+ assert.equal(r.earned,0,'the settled characters are not paid again');
+ assert.equal(s.stars,6);
+ assert.equal(s.days[day].written.filter(c=>c==='人').length,1,'the written character is not counted twice');
+});
+test('a break with nothing answered yet settles nothing and does not create a day record',()=>{
+ const s=freshState();
+ const session={id:'empty',plan:{newChars:['人'],reviewChars:[],writeChars:[]},
+  results:{人:{recognized:false,transfer:false,written:false,mistakes:0,hinted:false}}};
+ assert.equal(settlePartial(s,session,day),null);
+ assert.equal(s.stars,0);
+ assert.equal(s.days[day],undefined);
+ assert.equal(settlePartial(s,null,day),null);
+});
