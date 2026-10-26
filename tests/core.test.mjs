@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {WORDS} from '../public/data.js';
-import {lookAlike,difficultyOf,awardBadges,BADGES,themeOptions} from '../public/core.js';
+import {lookAlike,difficultyOf,awardBadges,BADGES,themeOptions,placementDone,settlePartial as settle2} from '../public/core.js';
 import {LIFE_QUESTS,lifeQuest} from '../public/life.js';
 import {recordWriting,writeModeFor,writeStageOf,placementPick,placementResult,recordDiagnosed,freshState,createPlan,recordRecognition,stageOf,addDays,completeSession,settlePartial,optionsFor,validateBackup,dueWords} from '../public/core.js';
 const day='2026-10-24';
@@ -62,3 +62,7 @@ test('a break with nothing answered yet settles nothing and does not create a da
  assert.equal(s.days[day],undefined);
  assert.equal(settlePartial(s,null,day),null);
 });
+test('a character settled at a break but written afterwards earns its writing stars once, and the session record covers the whole day',()=>{const s=freshState();const session={id:'later',plan:{newChars:['人','口'],reviewChars:[],writeChars:['人']},results:{人:{recognized:true,transfer:true,written:false,mistakes:0,hinted:false},口:{recognized:false,transfer:false,written:false,mistakes:0,hinted:false}}};assert.equal(settle2(s,session,day).earned,3);session.results.人.written=true;session.results.口={recognized:true,transfer:true,written:false,mistakes:1,hinted:false};const r=completeSession(s,session,day);assert.equal(r.earned,3,'1 for the hinted character + 2 for writing after the break');assert.equal(r.earnedTotal,6);assert.equal(s.stars,6);assert.deepEqual(r.chars,['人','口']);assert.equal(r.total,2);assert.equal(r.independent,1);assert.equal(r.score,50);assert.equal(s.records.人.writeCount,1);assert.deepEqual(s.days[day].written,['人']);assert.equal(completeSession(s,{...session,id:'again'},day)?.earned,0);});
+test('two breaks in one session settle each character once',()=>{const s=freshState();const session={id:'twice',plan:{newChars:['人','口'],reviewChars:[],writeChars:[]},results:{人:{recognized:true,transfer:true,written:false,mistakes:0,hinted:false},口:{recognized:false,transfer:false,written:false,mistakes:0,hinted:false}}};settle2(s,session,day);session.results.口={recognized:true,transfer:true,written:false,mistakes:0,hinted:false};assert.deepEqual(settle2(s,session,day).chars,['口']);assert.equal(s.stars,6);assert.deepEqual(session.partialChars,['人','口']);const r=completeSession(s,session,day);assert.equal(r.earned,0);assert.equal(r.earnedTotal,6);assert.equal(r.total,2);});
+test('placement ends after nine answers, or after three misses once five are answered',()=>{const a=n=>Array.from({length:n},()=>({tier:1,correct:false}));assert.equal(placementDone(a(3),3),false);assert.equal(placementDone(a(5),3),true);assert.equal(placementDone(a(5),2),false);assert.equal(placementDone(a(9),0),true);});
+test('backup keeps at most sixty letters, the most recent ones',()=>{const raw=freshState();for(let i=0;i<70;i++)raw.letters[addDays('2026-01-01',i)]={chars:['人'],read:true};const s=validateBackup(raw,WORDS);const keys=Object.keys(s.letters).sort();assert.equal(keys.length,60);assert.equal(keys[0],addDays('2026-01-01',10));});

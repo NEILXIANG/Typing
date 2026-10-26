@@ -37,6 +37,9 @@ function candidates(state,words){let available=words.filter(w=>!state.records[w.
 export function themeOptions(state,words,day=today()){const tier=tierFor(state),list=candidates(state,words).sort((a,b)=>Math.abs(a.tier-tier)-Math.abs(b.tier-tier)||a.unit-b.unit||difficultyOf(a)-difficultyOf(b));if(!list.length)return [];const gap=w=>Math.abs(w.tier-tier),first=list[0],second=list.find(w=>w.unit!==first.unit&&gap(w)===gap(first));return second?[first.unit,second.unit]:[first.unit];}
 export function placementTier(correct,total){return correct/total>=.8?3:correct/total>=.5?2:1;}
 export function placementPick(words,tier,used,random=Math.random){return shuffle(words.filter(w=>w.tier===tier&&!used.includes(w.char)),random)[0]?.char;}
+// Placement ends after nine questions, or after three misses in a row once at least five are answered.
+export const PLACEMENT_MIN=5,PLACEMENT_MAX=9;
+export function placementDone(answers,misses){return answers.length>=PLACEMENT_MAX||(misses>=3&&answers.length>=PLACEMENT_MIN);}
 export function placementResult(answers){const ok=t=>answers.filter(a=>a.tier===t&&a.correct).length;return ok(3)>=2?3:ok(2)>=2||ok(3)>=1?2:1;}
 // A character recognised during placement skips the first lesson but must be confirmed by a review tomorrow.
 export function recordDiagnosed(state,char,day=today()){if(state.records[char])return false;state.records[char]={char,firstDay:day,cleanDays:[],strength:1,writeCount:0,mistakes:0,lastDay:day,due:addDays(day,1),diagnosed:true};return true;}
@@ -81,10 +84,15 @@ export function completeSession(state,session,day=today()){
   }
  }
  state.days[day]??={newChars:[],reviewChars:[],written:[],points:0};
- for(const char of session.plan.writeChars||[]){if(used.includes(char)||alreadyPaid.includes(char)||!session.results[char]?.written||state.days[day].written.includes(char))continue;state.days[day].written.push(char);earned+=2;}
+ // A character settled at a break but written afterwards still earns its writing stars once.
+ const paidWriting=session.partialWritten||[];
+ for(const char of [...new Set([...(session.plan.writeChars||[]),...alreadyPaid])]){if(used.includes(char)||paidWriting.includes(char)||!session.results[char]?.written||state.days[day].written.includes(char))continue;if(state.records[char]&&alreadyPaid.includes(char))state.records[char].writeCount++;state.days[day].written.push(char);earned+=2;}
+ // Stats merge what the break already settled, so the day's record and score describe the whole session.
+ const part=session.partialStats||{independent:0,attempts:0,earned:0};independent+=part.independent;attempts+=part.attempts;const allChars=[...alreadyPaid,...used];
  const score=attempts?Math.round(100*independent/attempts):0;
  state.stars+=earned;state.days[day]??={newChars:[],reviewChars:[],written:[],points:0};state.days[day].points+=earned;
- const result={id:session.id,day,earned,score,independent,total:attempts,chars:used,written:[...new Set([...used,...(session.plan.writeChars||[])])].filter(c=>session.results[c]?.written).length,help:Object.values(session.results).filter(p=>p.hinted).length};
+ // earned = stars paid at this moment (a break may have paid some already); earnedTotal = the whole session, for the summary page.
+ const result={id:session.id,day,earned,earnedTotal:earned+part.earned,score,independent,total:attempts,chars:allChars,written:[...new Set([...allChars,...(session.plan.writeChars||[])])].filter(c=>session.results[c]?.written).length,help:Object.values(session.results).filter(p=>p.hinted).length};
  state.sessions.push(result);state.sessions=state.sessions.slice(-180);state.active=null;
  const recent=state.sessions.filter(s=>s.total>0).slice(-2);
  if(state.settings.level==='auto'&&recent.length===2&&recent.every(s=>s.score>=85))state.tier=Math.min(3,state.tier+1);
@@ -97,19 +105,21 @@ export function settlePartial(state,session,day=today()){
  if(!session)return null;
  const plan=session.plan||{},results=session.results||{};
  // The day record is created by recordRecognition, so a break before anything was answered leaves no trace at all.
- let earned=0;const used=[];
+ let earned=0,independent=0;const used=[],written=[];
  for(const char of [...(plan.reviewChars||[]),...(plan.newChars||[])]){
+  if((session.partialChars||[]).includes(char))continue;
   const p=results[char];if(!p?.recognized||!p?.transfer)continue;
   const clean=p.mistakes===0&&!p.hinted;
   if(recordRecognition(state,char,{clean,mistakes:p.mistakes,wasNew:(plan.newChars||[]).includes(char)},day)){
-   earned+=clean?3:1;used.push(char);
+   earned+=clean?3:1;used.push(char);if(clean)independent++;
    const r=state.records[char];if(isSecure(r)&&!r.secureDay){r.secureDay=day;earned+=2;}
-   if(p.written&&!state.days[day].written.includes(char)){state.records[char].writeCount++;state.days[day].written.push(char);earned+=2;}
+   if(p.written&&!state.days[day].written.includes(char)){state.records[char].writeCount++;state.days[day].written.push(char);written.push(char);earned+=2;}
   }
  }
  if(!used.length)return null;
  state.stars+=earned;state.days[day].points+=earned;
- session.partialSettled=true;session.partialChars=used;
+ const prev=session.partialStats||{independent:0,attempts:0,earned:0};
+ session.partialSettled=true;session.partialChars=[...(session.partialChars||[]),...used];session.partialWritten=[...(session.partialWritten||[]),...written];session.partialStats={independent:prev.independent+independent,attempts:prev.attempts+used.length,earned:prev.earned+earned};
  return {earned,chars:used};
 }
 export function shuffle(a,random=Math.random){const out=[...a];for(let i=out.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[out[i],out[j]]=[out[j],out[i]];}return out;}
@@ -130,7 +140,7 @@ export function validateBackup(raw,words){
  if(raw.decorPos&&typeof raw.decorPos==='object')for(const [k,v] of Object.entries(raw.decorPos)){if(s.owned.includes(k)&&v&&Number.isFinite(v.x)&&Number.isFinite(v.y))s.decorPos[k]={x:Math.max(0,Math.min(100,Math.round(v.x))),y:Math.max(0,Math.min(100,Math.round(v.y)))};}
  if(Array.isArray(raw.sessions))s.sessions=raw.sessions.filter(r=>r&&typeof r.id==='string'&&date.test(r.day)&&Number.isFinite(r.score)&&Number.isFinite(r.total)&&Number.isFinite(r.earned)).slice(-180).map(r=>({id:r.id.slice(0,40),day:r.day,earned:num(r.earned,1000),score:num(r.score,100),independent:num(r.independent,100),total:num(r.total,100),written:num(r.written,100),help:num(r.help,100),chars:Array.isArray(r.chars)?r.chars.filter(c=>valid.has(c)):[]}));
  if(raw.family&&typeof raw.family==='object')for(const [k,v] of Object.entries(raw.family)){if(date.test(k))s.family[k]=!!v;}
- if(raw.letters&&typeof raw.letters==='object')for(const [k,v] of Object.entries(raw.letters)){if(date.test(k)&&v&&Array.isArray(v.chars)){const chars=v.chars.filter(c=>valid.has(c)).slice(0,8);if(chars.length)s.letters[k]={chars,read:v.read===true};}}
+ if(raw.letters&&typeof raw.letters==='object')for(const [k,v] of Object.entries(raw.letters).sort().slice(-60)){if(date.test(k)&&v&&Array.isArray(v.chars)){const chars=v.chars.filter(c=>valid.has(c)).slice(0,8);if(chars.length)s.letters[k]={chars,read:v.read===true};}}
  if(raw.badges&&typeof raw.badges==='object')for(const [k,v] of Object.entries(raw.badges)){if(BADGES.some(b=>b.id===k)&&date.test(v))s.badges[k]=v;}
  if(raw.writing&&typeof raw.writing==='object')for(const [c,r] of Object.entries(raw.writing)){if(!valid.has(c)||!r||!date.test(r.lastDay))continue;const strokeErrors={};if(r.strokeErrors&&typeof r.strokeErrors==='object')for(const [k,v] of Object.entries(r.strokeErrors)){const i=Number(k);if(Number.isInteger(i)&&i>=0&&i<64)strokeErrors[i]=num(v,10000);}s.writing[c]={char:c,attempts:num(r.attempts,10000),traceDays:days(r.traceDays),blindDays:days(r.blindDays),strokeErrors,ms:num(r.ms,36e6),downshifts:num(r.downshifts,10000),pending:r.pending===true,lastDay:r.lastDay};}
  if(raw.life&&typeof raw.life==='object')for(const [k,v] of Object.entries(raw.life)){if(date.test(k)&&v&&/^[a-z]{2,12}$/.test(v.id)&&valid.has(v.char))s.life[k]={id:v.id,char:v.char};}
